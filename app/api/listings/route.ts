@@ -1,0 +1,83 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const category = searchParams.get("category") ?? undefined;
+  const q = searchParams.get("q") ?? undefined;
+  const min = searchParams.get("min");
+  const max = searchParams.get("max");
+  const sort = searchParams.get("sort") ?? "newest";
+
+  const where: any = {};
+  if (category) where.category = category;
+  if (q) {
+    where.OR = [
+      { title: { contains: q } },
+      { description: { contains: q } },
+      { location: { contains: q } },
+      { fromPlace: { contains: q } },
+      { toPlace: { contains: q } },
+    ];
+  }
+  if (min || max) {
+    where.price = {};
+    if (min) where.price.gte = Number(min);
+    if (max) where.price.lte = Number(max);
+  }
+
+  const orderBy =
+    sort === "price_asc" ? { price: "asc" as const } :
+    sort === "price_desc" ? { price: "desc" as const } :
+    { createdAt: "desc" as const };
+
+  const listings = await prisma.listing.findMany({ where, orderBy, take: 60 });
+  return NextResponse.json({ listings });
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ success: false, message: "يجب تسجيل الدخول لنشر إعلان" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const {
+    category, title, description, price,
+    location, lat, lng, fromPlace, toPlace,
+    images, ownerName, ownerPhone, planId,
+  } = body;
+
+  if (!category || !title || !description || !price) {
+    return NextResponse.json({ success: false, message: "الحقول المطلوبة غير مكتملة" }, { status: 400 });
+  }
+  if (!planId) {
+    return NextResponse.json({ success: false, message: "يتطلب النشر اشتراكاً فعالاً" }, { status: 402 });
+  }
+
+  const userId = (session.user as any).id as string;
+
+  const listing = await prisma.listing.create({
+    data: {
+      category,
+      title,
+      description,
+      price: Number(price),
+      location: location || null,
+      lat: typeof lat === "number" ? lat : null,
+      lng: typeof lng === "number" ? lng : null,
+      fromPlace: fromPlace || null,
+      toPlace: toPlace || null,
+      images: JSON.stringify(Array.isArray(images) ? images.slice(0, 6) : []),
+      ownerName: ownerName || session.user.name || null,
+      ownerPhone: ownerPhone || null,
+      ownerEmail: session.user.email || null,
+      userId,
+      featured: planId !== "basic",
+    },
+  });
+
+  return NextResponse.json({ success: true, listing });
+}

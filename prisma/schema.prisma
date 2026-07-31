@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Switch to "postgresql" for production and set DATABASE_URL accordingly.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String // bcrypt hash
+  createdAt DateTime @default(now())
+
+  listings    Listing[]
+  subscribers Subscriber[]
+}
+
+model Listing {
+  id          String   @id @default(cuid())
+  category    String // homes | cars | chalets | resorts | delivery
+  title       String
+  description String
+  price       Float
+  location    String? // used by homes / cars / chalets / resorts
+  lat         Float? // Google Maps pin latitude
+  lng         Float? // Google Maps pin longitude
+  fromPlace   String? // used by delivery
+  toPlace     String? // used by delivery
+  images      String   @default("[]") // JSON-stringified array of image URLs
+  featured    Boolean  @default(false)
+  ownerName   String?
+  ownerPhone  String?
+  ownerEmail  String?
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([category])
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  planId    String // basic | pro | unlimited
+  active    Boolean  @default(true)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Booking {
+  id            String   @id @default(cuid())
+  listingId     String
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  amount        Float
+  status        String   @default("paid") // paid | pending | failed
+  createdAt     DateTime @default(now())
+}
