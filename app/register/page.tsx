@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { UserPlus } from "lucide-react";
+import { UserPlus, MailCheck } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,25 +21,28 @@ export default function RegisterPage() {
       body: JSON.stringify(form),
     });
     const data = await res.json();
+    setLoading(false);
     if (!res.ok || !data.success) {
       setError(data.message ?? "تعذّر إنشاء الحساب");
-      setLoading(false);
       return;
     }
-
-    const signInRes = await signIn("credentials", {
-      email: form.email,
-      password: form.password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (signInRes?.error) {
-      router.push("/login");
-      return;
-    }
-    router.push("/post");
-    router.refresh();
+    setDone(true);
   };
+
+  if (done) {
+    return (
+      <div className="max-w-sm mx-auto px-4 py-16 text-center flex flex-col items-center gap-4">
+        <MailCheck className="w-14 h-14 text-teal" />
+        <h1 className="text-xl font-display font-bold text-navy">تحقق من بريدك الإلكتروني</h1>
+        <p className="text-sm text-muted">
+          أرسلنا رابط تأكيد إلى <span className="font-bold text-ink">{form.email}</span>. اضغط عليه لتفعيل حسابك، ثم سجّل الدخول.
+        </p>
+        <Link href="/login" className="mt-2 rounded-xl px-6 py-3 font-bold bg-navy text-white hover:bg-navy-deep transition-colors">
+          الذهاب لتسجيل الدخول
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-sm mx-auto px-4 py-14">

@@ -23,6 +23,10 @@ export const authOptions: NextAuthOptions = {
         const valid = await bcrypt.compare(credentials.password, user.password);
         if (!valid) return null;
 
+        if (!user.emailVerified) {
+          throw new Error("يرجى تأكيد بريدك الإلكتروني أولاً — تحقق من صندوق الوارد");
+        }
+
         return { id: user.id, name: user.name, email: user.email };
       },
     }),
