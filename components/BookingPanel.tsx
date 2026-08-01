@@ -82,10 +82,8 @@ export default function BookingPanel({
       {stage === "pay" && (
         <PaymentModal
           title={`حجز: ${title}`}
-          amount={price}
-          amountLabel={`السعر ${unit}`}
-          endpoint="/api/checkout"
-          extra={{
+          kind="booking"
+          payload={{
             listingId,
             customerName: contact.name,
             customerPhone: contact.phone,

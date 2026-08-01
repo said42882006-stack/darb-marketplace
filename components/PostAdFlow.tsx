@@ -2,22 +2,31 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Sparkles } from "lucide-react";
-import { CATEGORIES, PLANS, Plan } from "@/lib/constants";
+import { Gift, CreditCard, CheckCircle2 } from "lucide-react";
+import { CATEGORIES, LISTING_CREDIT_PRICE_OMR, LISTING_CREDIT_AMOUNT } from "@/lib/constants";
 import PaymentModal from "./PaymentModal";
 import ImageUploader from "./ImageUploader";
 import LocationPicker, { LocationValue } from "./LocationPicker";
 
-type Step = "plan" | "details" | "publishing";
+type Step = "details" | "publishing";
 
-export default function PostAdFlow({ initialPlanId }: { initialPlanId?: string }) {
+export default function PostAdFlow({
+  freeRemaining,
+  credits,
+  subscriptionPlanName,
+  subscriptionExpiresAt,
+}: {
+  freeRemaining: number;
+  credits: number;
+  subscriptionPlanName?: string | null;
+  subscriptionExpiresAt?: string | null;
+}) {
   const router = useRouter();
-  const initialPlan = PLANS.find((p) => p.id === initialPlanId);
 
-  const [step, setStep] = useState<Step>("plan");
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(initialPlan ?? null);
+  const [step, setStep] = useState<Step>("details");
+  const [remainingFree, setRemainingFree] = useState(freeRemaining);
+  const [remainingCredits, setRemainingCredits] = useState(credits);
   const [showPay, setShowPay] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
   const [error, setError] = useState("");
 
   const [images, setImages] = useState<string[]>([]);
@@ -41,6 +50,9 @@ export default function PostAdFlow({ initialPlanId }: { initialPlanId?: string }
     form.price &&
     (catDef.isRoute ? fromLocation.address && toLocation.address : location.address);
 
+  const hasActiveSubscription = !!subscriptionPlanName;
+  const hasQuota = hasActiveSubscription || remainingFree > 0 || remainingCredits > 0;
+
   const publish = async () => {
     setStep("publishing");
     setError("");
@@ -49,7 +61,6 @@ export default function PostAdFlow({ initialPlanId }: { initialPlanId?: string }
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
-        planId: selectedPlan?.id,
         images,
         location: location.address,
         lat: location.lat,
@@ -60,6 +71,10 @@ export default function PostAdFlow({ initialPlanId }: { initialPlanId?: string }
     });
     const data = await res.json();
     if (!res.ok || !data.success) {
+      if (data.code === "NEEDS_CREDIT") {
+        setRemainingFree(0);
+        setRemainingCredits(0);
+      }
       setError(data.message ?? "تعذّر نشر الإعلان");
       setStep("details");
       return;
@@ -70,49 +85,52 @@ export default function PostAdFlow({ initialPlanId }: { initialPlanId?: string }
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-display font-bold text-navy mb-1">نشر إعلان جديد</h1>
-      <p className="text-sm text-muted mb-6">
-        {subscribed ? "اشتراكك فعّال — يمكنك تعبئة تفاصيل الإعلان الآن." : "يتطلب النشر اختيار باقة اشتراك أولاً."}
-      </p>
 
-      {step === "plan" && !subscribed && (
-        <div className="flex flex-col gap-3">
-          {PLANS.map((p) => (
+      {/* Quota banner */}
+      {hasActiveSubscription ? (
+        <div className="mb-6 rounded-xl border border-teal/30 bg-sand p-3 flex items-center gap-2 text-sm text-ink">
+          <CheckCircle2 className="w-4 h-4 text-teal shrink-0" />
+          اشتراكك بباقة <span className="font-bold text-teal">{subscriptionPlanName}</span> فعّال — نشر غير محدود
+          {subscriptionExpiresAt && (
+            <> حتى <span className="font-num">{new Date(subscriptionExpiresAt).toLocaleDateString("ar")}</span></>
+          )}
+          .
+        </div>
+      ) : remainingFree > 0 ? (
+        <div className="mb-6 rounded-xl border border-teal/30 bg-sand p-3 flex items-center gap-2 text-sm text-ink">
+          <Gift className="w-4 h-4 text-teal shrink-0" />
+          لديك <span className="font-bold text-teal font-num">{remainingFree}</span> من إعلاناتك المجانية متبقية.
+        </div>
+      ) : remainingCredits > 0 ? (
+        <div className="mb-6 rounded-xl border border-teal/30 bg-sand p-3 flex items-center gap-2 text-sm text-ink">
+          <CreditCard className="w-4 h-4 text-teal shrink-0" />
+          لديك <span className="font-bold text-teal font-num">{remainingCredits}</span> رصيد نشر مدفوع متبقٍ.
+        </div>
+      ) : (
+        <div className="mb-6 rounded-xl border border-amber/40 bg-sand p-4 flex flex-col gap-3">
+          <p className="text-sm text-ink">
+            استخدمت إعلاناتك المجانية الثلاثة. لنشر المزيد، اشترِ رصيداً أو اشترك بباقة:
+            <span className="font-bold text-teal font-num"> {LISTING_CREDIT_AMOUNT} إعلانات مقابل {LISTING_CREDIT_PRICE_OMR} ر.ع.</span>
+          </p>
+          <div className="flex gap-2">
             <button
-              key={p.id}
-              onClick={() => setSelectedPlan(p)}
-              className={`text-right rounded-xl border p-4 flex flex-col gap-2 focus:outline-none focus:ring-2 focus:ring-teal ${
-                selectedPlan?.id === p.id ? "border-teal bg-sand" : "border-line bg-white"
-              }`}
+              onClick={() => setShowPay(true)}
+              className="flex-1 rounded-xl py-2.5 font-bold bg-teal text-white hover:bg-teal-deep transition-colors"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-bold flex items-center gap-1.5 text-navy">
-                  {p.name}
-                  {p.popular && <Sparkles className="w-4 h-4 text-amber" />}
-                </span>
-                <span className="font-bold text-teal font-num">{p.price} ﷼ / شهر</span>
-              </div>
-              <ul className="text-xs flex flex-col gap-1 text-muted">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-center gap-1.5">
-                    <Check className="w-3.5 h-3.5 shrink-0 text-teal" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
+              شراء رصيد النشر
             </button>
-          ))}
-          <button
-            disabled={!selectedPlan}
-            onClick={() => setShowPay(true)}
-            className="mt-2 w-full rounded-xl py-3 font-bold disabled:opacity-40 bg-teal text-white hover:bg-teal-deep transition-colors"
-          >
-            الاشتراك والمتابعة
-          </button>
+            <a
+              href="/pricing"
+              className="flex-1 rounded-xl py-2.5 font-bold border border-teal text-teal text-center hover:bg-sand-deep transition-colors"
+            >
+              أو اشترك بباقة
+            </a>
+          </div>
         </div>
       )}
 
-      {(step === "details" || (step === "plan" && subscribed)) && (
-        <div className="flex flex-col gap-3">
+      {step === "details" && (
+        <div className={`flex flex-col gap-3 ${!hasQuota ? "opacity-50 pointer-events-none" : ""}`}>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <label className="text-sm font-medium text-ink">
             القسم
@@ -139,7 +157,7 @@ export default function PostAdFlow({ initialPlanId }: { initialPlanId?: string }
               placeholder="اكتب تفاصيل تهم المستأجر أو المستفيد من الخدمة" />
           </label>
           <label className="text-sm font-medium text-ink">
-            السعر (﷼)
+            السعر (ر.ع.)
             <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}
               className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
               placeholder="0" />
@@ -174,7 +192,7 @@ export default function PostAdFlow({ initialPlanId }: { initialPlanId?: string }
           </div>
 
           <button
-            disabled={!canPublish}
+            disabled={!canPublish || !hasQuota}
             onClick={publish}
             className="mt-2 w-full rounded-xl py-3 font-bold disabled:opacity-40 bg-navy text-white hover:bg-navy-deep transition-colors"
           >
@@ -185,18 +203,15 @@ export default function PostAdFlow({ initialPlanId }: { initialPlanId?: string }
 
       {step === "publishing" && <p className="text-sm text-muted">جارٍ نشر الإعلان...</p>}
 
-      {showPay && selectedPlan && (
+      {showPay && (
         <PaymentModal
-          title={`الاشتراك في الباقة ${selectedPlan.name}`}
-          amount={selectedPlan.price}
-          amountLabel="رسوم الاشتراك الشهري"
-          endpoint="/api/subscribe"
-          extra={{ planId: selectedPlan.id }}
+          title="شراء رصيد نشر"
+          kind="credit"
+          payload={{}}
           onClose={() => setShowPay(false)}
           onSuccess={() => {
             setShowPay(false);
-            setSubscribed(true);
-            setStep("details");
+            setRemainingCredits(remainingCredits + LISTING_CREDIT_AMOUNT);
           }}
         />
       )}

@@ -45,6 +45,7 @@ export async function sendMail({
     const { data, error } = await resend.emails.send({ from, to, subject, html });
     if (!error) return { sent: true, id: data?.id, via: "resend" };
     console.error("[mailer] Resend error, falling back to SMTP if configured:", error);
+    // fall through to SMTP below
   }
 
   const smtp = getSmtp();

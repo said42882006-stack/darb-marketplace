@@ -66,7 +66,7 @@ export default function ListingCard({ listing }: { listing: ListingCardData & { 
         )}
         <div className="flex items-center justify-between pt-2 mt-1 border-t border-line">
           <span className="text-xs text-muted">{cat.unit}</span>
-          <span className="text-lg font-bold text-teal font-num">{listing.price} ﷼</span>
+          <span className="text-lg font-bold text-teal font-num">{listing.price} ر.ع.</span>
         </div>
       </div>
     </Link>

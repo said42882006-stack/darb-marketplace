@@ -17,6 +17,7 @@ model User {
   emailVerified     Boolean   @default(false)
   verifyToken       String?   @unique
   verifyTokenExpiry DateTime?
+  listingCredits    Int       @default(0) // paid credits beyond the 3 free listings; each purchase adds 2
   createdAt DateTime @default(now())
 
   listings    Listing[]
@@ -51,7 +52,9 @@ model Subscriber {
   name      String
   phone     String
   planId    String // basic | pro | unlimited
+  interval  String   @default("monthly") // monthly | yearly
   active    Boolean  @default(true)
+  expiresAt DateTime?
   userId    String?
   user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
@@ -66,4 +69,16 @@ model Booking {
   amount        Float
   status        String   @default("paid") // paid | pending | failed
   createdAt     DateTime @default(now())
+}
+
+// Tracks a Thawani checkout session from creation until fulfillment, so the
+// redirect-back callback knows what to fulfill (credit purchase, subscription,
+// or booking) once payment is confirmed.
+model PendingPayment {
+  id               String   @id @default(cuid())
+  kind             String // credit | subscription | booking
+  payload          String // JSON-encoded data needed to fulfill (userId, planId, listingId, etc.)
+  thawaniSessionId String?
+  status           String   @default("pending") // pending | fulfilled | failed
+  createdAt        DateTime @default(now())
 }

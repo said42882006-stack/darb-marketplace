@@ -75,7 +75,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
 
           <div className="flex items-center justify-between rounded-xl p-4 bg-sand">
             <span className="text-sm text-muted">{cat.unit}</span>
-            <span className="text-2xl font-bold text-teal font-num">{listing.price} ﷼</span>
+            <span className="text-2xl font-bold text-teal font-num">{listing.price} ر.ع.</span>
           </div>
 
           <BookingPanel listingId={listing.id} title={listing.title} price={listing.price} unit={cat.unit} />

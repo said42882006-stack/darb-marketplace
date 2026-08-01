@@ -1,37 +1,76 @@
 "use client";
 
-import { useState } from "react";
-import { CreditCard, X, ShieldCheck, Loader2, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CreditCard, X, ShieldCheck, Loader2, Check, ExternalLink } from "lucide-react";
+
+type Kind = "credit" | "subscription" | "booking";
 
 export default function PaymentModal({
   title,
-  amount,
-  amountLabel,
-  endpoint,
-  extra,
+  kind,
+  payload,
   onClose,
   onSuccess,
 }: {
   title: string;
-  amount: number;
-  amountLabel: string;
-  endpoint: string; // API route to POST to, e.g. /api/checkout or /api/subscribe
-  extra?: Record<string, unknown>;
+  kind: Kind;
+  payload: Record<string, unknown>;
   onClose: () => void;
   onSuccess: (data: any) => void;
 }) {
-  const [stage, setStage] = useState<"form" | "loading" | "done" | "error">("form");
+  const [stage, setStage] = useState<"init" | "live" | "form" | "loading" | "done" | "error">("init");
   const [card, setCard] = useState({ name: "", number: "", exp: "", cvv: "" });
   const [error, setError] = useState("");
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [amountOMR, setAmountOMR] = useState<number | null>(null);
+  const [itemName, setItemName] = useState("");
 
-  const submit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/pay/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind, ...payload }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (!res.ok || !data.success) {
+          setError(data.message ?? "تعذّر بدء عملية الدفع");
+          setStage("error");
+          return;
+        }
+        if (data.live) {
+          setRedirectUrl(data.redirectUrl);
+          setStage("live");
+        } else {
+          setPendingId(data.pendingId);
+          setAmountOMR(data.amountOMR);
+          setItemName(data.name);
+          setStage("form");
+        }
+      } catch {
+        if (!cancelled) {
+          setError("تعذّر الاتصال بالخادم");
+          setStage("error");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const submitMock = async (e: React.FormEvent) => {
     e.preventDefault();
     setStage("loading");
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/pay/mock-confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, card, ...extra }),
+        body: JSON.stringify({ pendingId, card }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -60,11 +99,34 @@ export default function PaymentModal({
           </button>
         </div>
 
+        {stage === "init" && (
+          <div className="p-10 flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-teal" />
+            <span className="text-sm text-muted">جارٍ التحضير...</span>
+          </div>
+        )}
+
+        {stage === "live" && redirectUrl && (
+          <div className="p-6 flex flex-col items-center gap-4 text-center">
+            <ShieldCheck className="w-12 h-12 text-teal" />
+            <p className="text-sm text-ink">
+              رح يتم تحويلك لصفحة دفع آمنة عبر <span className="font-bold">Thawani Pay</span> لإكمال العملية.
+            </p>
+            <a
+              href={redirectUrl}
+              className="w-full rounded-xl py-3 font-bold flex items-center justify-center gap-2 bg-teal text-white hover:bg-teal-deep transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              المتابعة للدفع الآمن
+            </a>
+          </div>
+        )}
+
         {stage === "form" && (
-          <form onSubmit={submit} className="p-5 flex flex-col gap-3">
+          <form onSubmit={submitMock} className="p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-muted">{amountLabel}</span>
-              <span className="text-xl font-bold text-teal font-num">{amount} ﷼</span>
+              <span className="text-muted">{itemName}</span>
+              <span className="text-xl font-bold text-teal font-num">{amountOMR} ر.ع.</span>
             </div>
             <label className="text-sm font-medium text-ink">
               اسم حامل البطاقة
@@ -97,7 +159,7 @@ export default function PaymentModal({
               تأكيد الدفع
             </button>
             <p className="text-xs text-center text-muted">
-              مدفوعات مشفّرة عبر بوابة Moyasar. في بيئة التطوير يتم محاكاة الاستجابة.
+              وضع تجريبي — لا يوجد بوابة دفع حقيقية مفعّلة بعد، لا تُجرى أي عملية دفع فعلية.
             </p>
           </form>
         )}
@@ -121,8 +183,8 @@ export default function PaymentModal({
         {stage === "error" && (
           <div className="p-8 flex flex-col items-center gap-3">
             <p className="text-sm text-center text-red-600">{error}</p>
-            <button onClick={() => setStage("form")} className="text-sm font-bold text-teal underline">
-              حاول مرة أخرى
+            <button onClick={onClose} className="text-sm font-bold text-teal underline">
+              إغلاق
             </button>
           </div>
         )}

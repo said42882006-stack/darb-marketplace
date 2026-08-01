@@ -30,11 +30,17 @@ export function categoryUnit(c: CategoryDef, locale: "ar" | "en") {
   return locale === "en" ? c.unitEn : c.unit;
 }
 
+export const FREE_LISTINGS_LIMIT = 3;
+// Thawani bills in OMR only, so the earlier "$1" is priced here as its OMR equivalent.
+export const LISTING_CREDIT_PRICE_OMR = 0.4; // buys LISTING_CREDIT_AMOUNT extra listings
+export const LISTING_CREDIT_AMOUNT = 2;
+
 export interface Plan {
   id: "basic" | "pro" | "unlimited";
   name: string;
   nameEn: string;
-  price: number;
+  monthlyPriceOMR: number;
+  yearlyPriceOMR: number; // discounted vs. monthlyPriceOMR * 12
   features: string[];
   featuresEn: string[];
   popular?: boolean;
@@ -45,25 +51,28 @@ export const PLANS: Plan[] = [
     id: "basic",
     name: "أساسية",
     nameEn: "Basic",
-    price: 49,
-    features: ["إعلان واحد شهرياً", "ظهور عادي في نتائج البحث", "دعم عبر البريد الإلكتروني"],
-    featuresEn: ["1 listing per month", "Standard search placement", "Email support"],
+    monthlyPriceOMR: 2,
+    yearlyPriceOMR: 20, // ~17% off vs monthly x12
+    features: ["نشر إعلانات غير محدود طوال الاشتراك", "ظهور عادي في نتائج البحث", "دعم عبر البريد الإلكتروني"],
+    featuresEn: ["Unlimited listings while subscribed", "Standard search placement", "Email support"],
   },
   {
     id: "pro",
     name: "مميزة",
     nameEn: "Pro",
-    price: 149,
+    monthlyPriceOMR: 5,
+    yearlyPriceOMR: 50,
     popular: true,
-    features: ["حتى 10 إعلانات شهرياً", 'تمييز الإعلان بشارة "مميز"', "دعم مباشر عبر المحادثة"],
-    featuresEn: ["Up to 10 listings per month", 'Featured "Premium" badge', "Live chat support"],
+    features: ["كل مزايا الباقة الأساسية", 'تمييز كل إعلاناتك بشارة "مميز"', "دعم مباشر عبر المحادثة"],
+    featuresEn: ["Everything in Basic", 'All listings get a "Featured" badge', "Live chat support"],
   },
   {
     id: "unlimited",
     name: "احترافية",
     nameEn: "Professional",
-    price: 299,
-    features: ["إعلانات غير محدودة", "أولوية ظهور في كل الأقسام", "مدير حساب مخصص"],
-    featuresEn: ["Unlimited listings", "Priority placement everywhere", "Dedicated account manager"],
+    monthlyPriceOMR: 10,
+    yearlyPriceOMR: 100,
+    features: ["كل مزايا الباقة المميزة", "أولوية ظهور في كل الأقسام", "مدير حساب مخصص"],
+    featuresEn: ["Everything in Pro", "Priority placement everywhere", "Dedicated account manager"],
   },
 ];
