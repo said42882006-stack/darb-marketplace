@@ -42,11 +42,15 @@ export async function POST(req: NextRequest) {
   });
 
   if (session.user.email) {
-    sendMail({
-      to: session.user.email,
-      subject: `تفعيل اشتراك ${plan.name} - OTR`,
-      html: `<div dir="rtl" style="font-family:sans-serif"><h2>تم تفعيل اشتراكك ✅</h2><p>الباقة: ${plan.name}</p><p>المبلغ: ${plan.price} ﷼ / شهر</p><p>رقم العملية: ${transactionId}</p></div>`,
-    }).catch((err) => console.error("[mail] subscription confirmation failed:", err));
+    try {
+      await sendMail({
+        to: session.user.email,
+        subject: `تفعيل اشتراك ${plan.name} - OTR`,
+        html: `<div dir="rtl" style="font-family:sans-serif"><h2>تم تفعيل اشتراكك ✅</h2><p>الباقة: ${plan.name}</p><p>المبلغ: ${plan.price} ﷼ / شهر</p><p>رقم العملية: ${transactionId}</p></div>`,
+      });
+    } catch (err) {
+      console.error("[mail] subscription confirmation failed:", err);
+    }
   }
 
   return NextResponse.json({ success: true, subscriptionId: subscriber.id, planId, mode: hasLiveMoyasarKey() ? "live" : "mock" });

@@ -45,21 +45,28 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Fire-and-forget confirmation emails — a failed email must never fail the booking itself.
+  // Await both emails so they actually send before this serverless function exits.
+  // Promise.allSettled keeps a failed email from blocking the other or failing the booking.
+  const emailJobs: Promise<any>[] = [];
   if (customerEmail) {
-    sendMail({
-      to: customerEmail,
-      subject: "تأكيد الحجز - OTR",
-      html: `<div dir="rtl" style="font-family:sans-serif"><h2>تم تأكيد حجزك ✅</h2><p>${listing?.title ?? ""}</p><p>المبلغ المدفوع: ${chargeAmount} ﷼</p><p>رقم العملية: ${transactionId}</p></div>`,
-    }).catch((err) => console.error("[mail] booking confirmation failed:", err));
+    emailJobs.push(
+      sendMail({
+        to: customerEmail,
+        subject: "تأكيد الحجز - OTR",
+        html: `<div dir="rtl" style="font-family:sans-serif"><h2>تم تأكيد حجزك ✅</h2><p>${listing?.title ?? ""}</p><p>المبلغ المدفوع: ${chargeAmount} ﷼</p><p>رقم العملية: ${transactionId}</p></div>`,
+      }).catch((err) => console.error("[mail] booking confirmation failed:", err))
+    );
   }
   if (listing?.ownerEmail) {
-    sendMail({
-      to: listing.ownerEmail,
-      subject: "لديك حجز جديد - OTR",
-      html: `<div dir="rtl" style="font-family:sans-serif"><h2>حجز جديد على إعلانك</h2><p>${listing.title}</p><p>من: ${customerName || card.name}${customerPhone ? ` — ${customerPhone}` : ""}</p></div>`,
-    }).catch((err) => console.error("[mail] owner notification failed:", err));
+    emailJobs.push(
+      sendMail({
+        to: listing.ownerEmail,
+        subject: "لديك حجز جديد - OTR",
+        html: `<div dir="rtl" style="font-family:sans-serif"><h2>حجز جديد على إعلانك</h2><p>${listing.title}</p><p>من: ${customerName || card.name}${customerPhone ? ` — ${customerPhone}` : ""}</p></div>`,
+      }).catch((err) => console.error("[mail] owner notification failed:", err))
+    );
   }
+  await Promise.allSettled(emailJobs);
 
   return NextResponse.json({ success: true, transactionId, mode: hasLiveMoyasarKey() ? "live" : "mock" });
 }

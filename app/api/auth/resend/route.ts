@@ -25,21 +25,25 @@ export async function POST(req: NextRequest) {
 
   const verifyUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${verifyToken}`;
 
-  sendMail({
-    to: email,
-    subject: "أكّد بريدك الإلكتروني - OTR",
-    html: `
-      <div dir="rtl" style="font-family:sans-serif;line-height:1.8">
-        <h2>مرحباً ${user.name} 👋</h2>
-        <p>إليك رابط تأكيد جديد لبريدك الإلكتروني:</p>
-        <p>
-          <a href="${verifyUrl}" style="background:#2F6F6B;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">
-            تأكيد البريد الإلكتروني
-          </a>
-        </p>
-        <p style="color:#7A7362;font-size:13px">هذا الرابط صالح لمدة 24 ساعة.</p>
-      </div>`,
-  }).catch((err) => console.error("[mail] resend verification failed:", err));
+  try {
+    await sendMail({
+      to: email,
+      subject: "أكّد بريدك الإلكتروني - OTR",
+      html: `
+        <div dir="rtl" style="font-family:sans-serif;line-height:1.8">
+          <h2>مرحباً ${user.name} 👋</h2>
+          <p>إليك رابط تأكيد جديد لبريدك الإلكتروني:</p>
+          <p>
+            <a href="${verifyUrl}" style="background:#2F6F6B;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">
+              تأكيد البريد الإلكتروني
+            </a>
+          </p>
+          <p style="color:#7A7362;font-size:13px">هذا الرابط صالح لمدة 24 ساعة.</p>
+        </div>`,
+    });
+  } catch (err) {
+    console.error("[mail] resend verification failed:", err);
+  }
 
   return NextResponse.json({ success: true });
 }
