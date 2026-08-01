@@ -17,6 +17,7 @@ const config: Config = {
         display: ["var(--font-display)", "serif"],
         body: ["var(--font-body)", "sans-serif"],
         num: ["var(--font-num)", "sans-serif"],
+        brand: ["var(--font-brand)", "serif"],
       },
       borderRadius: {
         "2xl": "1rem",

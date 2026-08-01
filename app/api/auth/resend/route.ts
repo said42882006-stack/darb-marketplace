@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   sendMail({
     to: email,
-    subject: "أكّد بريدك الإلكتروني - دَرْب",
+    subject: "أكّد بريدك الإلكتروني - OTR",
     html: `
       <div dir="rtl" style="font-family:sans-serif;line-height:1.8">
         <h2>مرحباً ${user.name} 👋</h2>

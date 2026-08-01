@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   let transactionId: string;
 
   if (hasLiveMoyasarKey()) {
-    const result = await chargeCard(plan.price, `اشتراك دَرْب - باقة ${plan.name}`, card);
+    const result = await chargeCard(plan.price, `اشتراك OTR - باقة ${plan.name}`, card);
     if (!result.success) {
       return NextResponse.json({ success: false, message: result.message }, { status: 402 });
     }
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   if (session.user.email) {
     sendMail({
       to: session.user.email,
-      subject: `تفعيل اشتراك ${plan.name} - دَرْب`,
+      subject: `تفعيل اشتراك ${plan.name} - OTR`,
       html: `<div dir="rtl" style="font-family:sans-serif"><h2>تم تفعيل اشتراكك ✅</h2><p>الباقة: ${plan.name}</p><p>المبلغ: ${plan.price} ﷼ / شهر</p><p>رقم العملية: ${transactionId}</p></div>`,
     }).catch((err) => console.error("[mail] subscription confirmation failed:", err));
   }

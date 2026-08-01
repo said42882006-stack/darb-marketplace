@@ -49,14 +49,14 @@ export async function POST(req: NextRequest) {
   if (customerEmail) {
     sendMail({
       to: customerEmail,
-      subject: "تأكيد الحجز - دَرْب",
+      subject: "تأكيد الحجز - OTR",
       html: `<div dir="rtl" style="font-family:sans-serif"><h2>تم تأكيد حجزك ✅</h2><p>${listing?.title ?? ""}</p><p>المبلغ المدفوع: ${chargeAmount} ﷼</p><p>رقم العملية: ${transactionId}</p></div>`,
     }).catch((err) => console.error("[mail] booking confirmation failed:", err));
   }
   if (listing?.ownerEmail) {
     sendMail({
       to: listing.ownerEmail,
-      subject: "لديك حجز جديد - دَرْب",
+      subject: "لديك حجز جديد - OTR",
       html: `<div dir="rtl" style="font-family:sans-serif"><h2>حجز جديد على إعلانك</h2><p>${listing.title}</p><p>من: ${customerName || card.name}${customerPhone ? ` — ${customerPhone}` : ""}</p></div>`,
     }).catch((err) => console.error("[mail] owner notification failed:", err));
   }

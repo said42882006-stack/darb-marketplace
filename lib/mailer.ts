@@ -32,7 +32,7 @@ export async function sendMail({
     return { sent: false };
   }
   await t.sendMail({
-    from: process.env.MAIL_FROM || "دَرْب <no-reply@darb.app>",
+    from: process.env.MAIL_FROM || "OTR <no-reply@darb.app>",
     to,
     subject,
     html,

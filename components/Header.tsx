@@ -14,7 +14,7 @@ export default function Header() {
     <header className="sticky top-0 z-30 bg-navy">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="text-2xl font-display font-bold text-white">دَرْب</span>
+          <span className="text-2xl font-brand font-bold text-white tracking-wide">OTR</span>
           <span className="text-xs text-sand-deep hidden sm:inline">{t("tagline")}</span>
         </Link>
 

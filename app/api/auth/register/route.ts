@@ -39,11 +39,11 @@ export async function POST(req: NextRequest) {
 
   sendMail({
     to: email,
-    subject: "أكّد بريدك الإلكتروني - دَرْب",
+    subject: "أكّد بريدك الإلكتروني - OTR",
     html: `
       <div dir="rtl" style="font-family:sans-serif;line-height:1.8">
         <h2>مرحباً ${name} 👋</h2>
-        <p>شكراً لتسجيلك في منصة دَرْب. لإكمال إنشاء حسابك، فضلاً أكّد بريدك الإلكتروني بالضغط على الرابط التالي:</p>
+        <p>شكراً لتسجيلك في منصة OTR. لإكمال إنشاء حسابك، فضلاً أكّد بريدك الإلكتروني بالضغط على الرابط التالي:</p>
         <p>
           <a href="${verifyUrl}" style="background:#2F6F6B;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">
             تأكيد البريد الإلكتروني
