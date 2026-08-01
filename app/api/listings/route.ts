@@ -78,6 +78,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const sessionUserName = session.user.name;
+  const sessionUserEmail = session.user.email;
+
   const listing = await prisma.$transaction(async (tx) => {
     const created = await tx.listing.create({
       data: {
@@ -91,9 +94,9 @@ export async function POST(req: NextRequest) {
         fromPlace: fromPlace || null,
         toPlace: toPlace || null,
         images: JSON.stringify(Array.isArray(images) ? images.slice(0, 6) : []),
-        ownerName: ownerName || session.user.name || null,
+        ownerName: ownerName || sessionUserName || null,
         ownerPhone: ownerPhone || null,
-        ownerEmail: session.user.email || null,
+        ownerEmail: sessionUserEmail || null,
         userId,
         featured: usingSubscription && activeSubscription!.planId !== "basic",
       },
