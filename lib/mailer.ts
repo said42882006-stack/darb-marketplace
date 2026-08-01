@@ -1,19 +1,12 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+let client: Resend | null = null;
 
-function getTransporter() {
-  if (!process.env.SMTP_HOST) return null;
-  if (transporter) return transporter;
-  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: Number(process.env.SMTP_PORT) === 465,
-    auth: process.env.SMTP_USER
-      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      : undefined,
-  });
-  return transporter;
+function getClient() {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (client) return client;
+  client = new Resend(process.env.RESEND_API_KEY);
+  return client;
 }
 
 export async function sendMail({
@@ -25,17 +18,24 @@ export async function sendMail({
   subject: string;
   html: string;
 }) {
-  const t = getTransporter();
-  if (!t) {
-    // No SMTP configured yet — log instead of failing, so the rest of the flow still works.
-    console.log(`[mailer] SMTP not configured — would send "${subject}" to ${to}`);
+  const resend = getClient();
+  if (!resend) {
+    // No Resend key configured yet — log instead of failing, so the rest of the flow still works.
+    console.log(`[mailer] RESEND_API_KEY not configured — would send "${subject}" to ${to}`);
     return { sent: false };
   }
-  await t.sendMail({
-    from: process.env.MAIL_FROM || "OTR <no-reply@darb.app>",
+
+  const { data, error } = await resend.emails.send({
+    from: process.env.MAIL_FROM || "OTR <onboarding@resend.dev>",
     to,
     subject,
     html,
   });
-  return { sent: true };
+
+  if (error) {
+    console.error("[mailer] Resend error:", error);
+    return { sent: false, error };
+  }
+
+  return { sent: true, id: data?.id };
 }
