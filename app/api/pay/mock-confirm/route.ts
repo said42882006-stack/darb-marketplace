@@ -19,5 +19,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: result.message ?? "تعذّر إتمام العملية" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, mode: "mock", ...result });
+  return NextResponse.json({ mode: "mock", ...result });
 }
