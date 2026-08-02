@@ -19,7 +19,6 @@ export default function AccountDashboard({
   name,
   email,
   phone,
-  credits,
   subscriptionPlanName,
   subscriptionExpiresAt,
   listings,
@@ -27,7 +26,6 @@ export default function AccountDashboard({
   name: string;
   email: string;
   phone: string | null;
-  credits: number;
   subscriptionPlanName: string | null;
   subscriptionExpiresAt: string | null;
   listings: ListingRow[];
@@ -99,10 +97,12 @@ export default function AccountDashboard({
         ) : (
           <div className="flex items-center gap-2 text-ink">
             <CreditCard className="w-4 h-4 text-teal shrink-0" />
-            رصيد النشر المدفوع المتبقي: <span className="font-bold text-teal font-num">{credits}</span>
+            بدون اشتراك فعّال حالياً — نشر إعلانات إضافية يتطلب اشتراكاً بباقة.
           </div>
         )}
-        <Link href="/pricing" className="text-xs font-bold text-teal underline w-fit">إدارة الاشتراك والرصيد</Link>
+        <Link href="/pricing" className="text-xs font-bold text-teal underline w-fit">
+          {subscriptionPlanName ? "إدارة الاشتراك" : "عرض باقات الاشتراك"}
+        </Link>
       </div>
 
       {/* Profile form */}

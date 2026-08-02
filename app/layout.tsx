@@ -6,7 +6,7 @@ import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "OTR — إيجارات ونقل بثقة",
-  description: "منصة لتأجير المنازل والسيارات والشاليهات والمنتجعات، ونشر خدمات النقل والتوصيل، بدفع آمن داخل الموقع.",
+  description: "منصة لتأجير المنازل والسيارات والشاليهات والمنتجعات والدراجات والقوارب، ونشر خدمات الشاحنات ونقل النفط والمندوب والتاكسي والتوصيل.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

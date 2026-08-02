@@ -1,4 +1,7 @@
-export type CategoryId = "homes" | "cars" | "chalets" | "resorts" | "delivery";
+export type CategoryId =
+  | "homes" | "cars" | "chalets" | "resorts"
+  | "trucks" | "oil_transport" | "delivery" | "mandoob" | "taxi"
+  | "bikes" | "boats" | "other";
 
 export interface CategoryDef {
   id: CategoryId;
@@ -16,7 +19,14 @@ export const CATEGORIES: CategoryDef[] = [
   { id: "cars", label: "سيارات", labelEn: "Cars", labelSingular: "سيارة", unit: "لليوم", unitEn: "/ day", isRoute: false, gradient: "linear-gradient(135deg,#C98A3E,#7A4F1E)" },
   { id: "chalets", label: "شاليهات", labelEn: "Chalets", labelSingular: "شاليه", unit: "لليلة", unitEn: "/ night", isRoute: false, gradient: "linear-gradient(135deg,#3E8F82,#173B39)" },
   { id: "resorts", label: "منتجعات", labelEn: "Resorts", labelSingular: "منتجع", unit: "لليلة", unitEn: "/ night", isRoute: false, gradient: "linear-gradient(135deg,#2A5A8C,#12233D)" },
-  { id: "delivery", label: "نقل وتوصيل", labelEn: "Delivery & Transport", labelSingular: "خدمة نقل", unit: "للرحلة", unitEn: "/ trip", isRoute: true, gradient: "linear-gradient(135deg,#8A6A2F,#3A2C10)" },
+  { id: "trucks", label: "شاحنات ونقل عام", labelEn: "Trucks & Freight", labelSingular: "شاحنة", unit: "للرحلة", unitEn: "/ trip", isRoute: true, gradient: "linear-gradient(135deg,#8A6A2F,#3A2C10)" },
+  { id: "oil_transport", label: "نقل نفط ومشتقات", labelEn: "Fuel & Oil Transport", labelSingular: "ناقلة", unit: "للرحلة", unitEn: "/ trip", isRoute: true, gradient: "linear-gradient(135deg,#6B4B2A,#2A1B0E)" },
+  { id: "delivery", label: "توصيل طرود", labelEn: "Parcel Delivery", labelSingular: "خدمة توصيل", unit: "للطلب", unitEn: "/ order", isRoute: true, gradient: "linear-gradient(135deg,#8A6A2F,#3A2C10)" },
+  { id: "mandoob", label: "مندوب ومشاوير", labelEn: "Errand Agent", labelSingular: "مندوب", unit: "للمهمة", unitEn: "/ task", isRoute: false, gradient: "linear-gradient(135deg,#4A6E8A,#16283A)" },
+  { id: "taxi", label: "تاكسي وسائق خاص", labelEn: "Taxi & Private Driver", labelSingular: "تاكسي", unit: "للرحلة", unitEn: "/ trip", isRoute: false, gradient: "linear-gradient(135deg,#C9A23E,#7A5E1E)" },
+  { id: "bikes", label: "دراجات", labelEn: "Bikes", labelSingular: "دراجة", unit: "لليوم", unitEn: "/ day", isRoute: false, gradient: "linear-gradient(135deg,#3E8F6B,#153B2A)" },
+  { id: "boats", label: "قوارب", labelEn: "Boats", labelSingular: "قارب", unit: "لليوم", unitEn: "/ day", isRoute: false, gradient: "linear-gradient(135deg,#2A6E8C,#0E2C3A)" },
+  { id: "other", label: "تأجير عام", labelEn: "Other Rentals", labelSingular: "عنصر", unit: "لليوم", unitEn: "/ day", isRoute: false, gradient: "linear-gradient(135deg,#6B6B6B,#2B2B2B)" },
 ];
 
 export const CATEGORY_MAP: Record<string, CategoryDef> = Object.fromEntries(
@@ -33,9 +43,6 @@ export function categoryUnit(c: CategoryDef, locale: "ar" | "en") {
 export const FREE_LISTINGS_LIMIT = 3;
 export const MAX_LISTING_IMAGES = 10;
 export const LISTING_LIFETIME_DAYS = 14;
-// Thawani bills in OMR only, so the earlier "$1" is priced here as its OMR equivalent.
-export const LISTING_CREDIT_PRICE_OMR = 0.4; // buys LISTING_CREDIT_AMOUNT extra listings
-export const LISTING_CREDIT_AMOUNT = 2;
 
 export interface Plan {
   id: "basic" | "pro" | "unlimited";

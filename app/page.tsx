@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/constants";
+import { CATEGORY_ICONS } from "@/lib/categoryIcons";
 import ListingCard from "@/components/ListingCard";
 
 export const dynamic = "force-dynamic";
@@ -48,10 +49,10 @@ export default async function HomePage({
         </div>
         <div className="max-w-6xl mx-auto px-4 pt-10 pb-8 relative flex flex-col gap-5">
           <h1 className="text-3xl sm:text-4xl font-display font-bold leading-tight text-navy">
-            من باب بيتك إلى وجهتك التالية
+            كل ما يُؤجَّر أو يُنقَل، في مكان واحد
           </h1>
           <p className="text-sm sm:text-base max-w-xl text-muted">
-            استأجر منزلاً أو سيارة أو شاليهاً أو منتجعاً، أو انشر طلب نقل وتوصيل — كل ذلك في مكان واحد، مع دفع آمن داخل الموقع.
+            منازل، سيارات، شاليهات، منتجعات، دراجات، قوارب — أو شاحنات ونقل نفط ومندوب وتاكسي وتوصيل. تصفح، تواصل مباشرة مع المعلن، وانشر إعلانك بسهولة.
           </p>
           <form method="get" className="flex items-center gap-2 rounded-2xl p-2 shadow-sm bg-white border border-line">
             <Search className="w-5 h-5 mr-1 text-muted shrink-0" />
@@ -71,17 +72,20 @@ export default async function HomePage({
 
       {/* Category shortcuts */}
       <section className="max-w-6xl mx-auto px-4 pb-2">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {CATEGORIES.map((c) => (
-            <Link
-              key={c.id}
-              href={`/category/${c.id}`}
-              className="rounded-2xl border border-line bg-white p-4 flex flex-col items-center gap-2 hover:-translate-y-0.5 transition-transform focus:outline-none focus:ring-2 focus:ring-teal"
-            >
-              <span className="text-sm font-bold text-navy">{c.label}</span>
-              <span className="text-xs text-muted">{c.unit}</span>
-            </Link>
-          ))}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+          {CATEGORIES.map((c) => {
+            const Icon = CATEGORY_ICONS[c.id];
+            return (
+              <Link
+                key={c.id}
+                href={`/category/${c.id}`}
+                className="rounded-2xl border border-line bg-white p-4 flex flex-col items-center gap-2 hover:-translate-y-0.5 hover:border-teal transition-all focus:outline-none focus:ring-2 focus:ring-teal"
+              >
+                <Icon className="w-6 h-6 text-teal" strokeWidth={1.75} />
+                <span className="text-xs sm:text-sm font-bold text-navy text-center">{c.label}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

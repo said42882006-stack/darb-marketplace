@@ -12,9 +12,8 @@ export default async function PostPage() {
   }
 
   const userId = (session!.user as any).id as string;
-  const [listingCount, user, activeSubscription] = await Promise.all([
+  const [listingCount, activeSubscription] = await Promise.all([
     prisma.listing.count({ where: { userId } }),
-    prisma.user.findUnique({ where: { id: userId }, select: { listingCredits: true } }),
     prisma.subscriber.findFirst({
       where: { userId, active: true, expiresAt: { gt: new Date() } },
       orderBy: { expiresAt: "desc" },
@@ -22,7 +21,6 @@ export default async function PostPage() {
   ]);
 
   const freeRemaining = Math.max(0, FREE_LISTINGS_LIMIT - listingCount);
-  const credits = user?.listingCredits ?? 0;
   const subscriptionPlanName = activeSubscription
     ? PLANS.find((p) => p.id === activeSubscription.planId)?.name ?? null
     : null;
@@ -31,7 +29,6 @@ export default async function PostPage() {
   return (
     <PostAdFlow
       freeRemaining={freeRemaining}
-      credits={credits}
       subscriptionPlanName={subscriptionPlanName}
       subscriptionExpiresAt={subscriptionExpiresAt}
     />

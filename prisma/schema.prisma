@@ -3,7 +3,9 @@ generator client {
 }
 
 datasource db {
-  // Switch to "postgresql" for production and set DATABASE_URL accordingly.
+  // Using postgresql by default since production runs on Supabase/Postgres.
+  // For a quick local-only SQLite trial instead, change this to "sqlite" and
+  // set DATABASE_URL="file:./dev.db" in .env.
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
@@ -17,7 +19,6 @@ model User {
   emailVerified     Boolean   @default(false)
   verifyToken       String?   @unique
   verifyTokenExpiry DateTime?
-  listingCredits    Int       @default(0) // paid credits beyond the 3 free listings; each purchase adds 2
   createdAt DateTime @default(now())
 
   listings    Listing[]
@@ -26,15 +27,15 @@ model User {
 
 model Listing {
   id          String   @id @default(cuid())
-  category    String // homes | cars | chalets | resorts | delivery
+  category    String // homes | cars | chalets | resorts | trucks | oil_transport | delivery | mandoob | taxi | bikes | boats | other
   title       String
   description String
   price       Float
-  location    String? // used by homes / cars / chalets / resorts
+  location    String? // used by non-route categories (homes, cars, chalets, resorts, mandoob, taxi, bikes, boats, other)
   lat         Float? // Google Maps pin latitude
   lng         Float? // Google Maps pin longitude
-  fromPlace   String? // used by delivery
-  toPlace     String? // used by delivery
+  fromPlace   String? // used by route-based categories (trucks, oil_transport, delivery)
+  toPlace     String? // used by route-based categories (trucks, oil_transport, delivery)
   images      String   @default("[]") // JSON-stringified array of image URLs
   featured    Boolean  @default(false)
   ownerName   String?
@@ -61,24 +62,14 @@ model Subscriber {
   createdAt DateTime @default(now())
 }
 
-model Booking {
-  id            String   @id @default(cuid())
-  listingId     String
-  customerName  String
-  customerPhone String
-  customerEmail String?
-  amount        Float
-  status        String   @default("paid") // paid | pending | failed
-  createdAt     DateTime @default(now())
-}
-
 // Tracks a Thawani checkout session from creation until fulfillment, so the
-// redirect-back callback knows what to fulfill (credit purchase, subscription,
-// or booking) once payment is confirmed.
+// redirect-back callback knows what to fulfill once payment is confirmed.
+// Subscriptions are the only paid product — no per-booking or per-listing-credit
+// payments — so "subscription" is the only kind in practice today.
 model PendingPayment {
   id               String   @id @default(cuid())
-  kind             String // credit | subscription | booking
-  payload          String // JSON-encoded data needed to fulfill (userId, planId, listingId, etc.)
+  kind             String // subscription
+  payload          String // JSON-encoded data needed to fulfill (userId, planId, interval)
   thawaniSessionId String?
   status           String   @default("pending") // pending | fulfilled | failed
   createdAt        DateTime @default(now())

@@ -1,14 +1,15 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Home, Car, Palmtree, Waves, Truck, Clock } from "lucide-react";
+import { MapPin, Clock, ChevronLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CATEGORY_MAP } from "@/lib/constants";
+import { CATEGORY_ICONS } from "@/lib/categoryIcons";
+import { relativeTimeAr } from "@/lib/relativeTime";
 import Badge from "@/components/Badge";
 import RouteLine from "@/components/RouteLine";
-import BookingPanel from "@/components/BookingPanel";
+import ContactPanel from "@/components/ContactPanel";
 
 export const dynamic = "force-dynamic";
-
-const ICONS: Record<string, typeof Home> = { homes: Home, cars: Car, chalets: Palmtree, resorts: Waves, delivery: Truck };
 
 function parseImages(images: string): string[] {
   try {
@@ -24,7 +25,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
   if (!listing) notFound();
 
   const cat = CATEGORY_MAP[listing.category];
-  const Icon = ICONS[listing.category] ?? Home;
+  const Icon = CATEGORY_ICONS[listing.category as keyof typeof CATEGORY_ICONS] ?? CATEGORY_ICONS.other;
   const images = parseImages(listing.images);
   const mainImage = images[0];
   const isExpired = !!listing.expiresAt && listing.expiresAt < new Date();
@@ -34,6 +35,15 @@ export default async function ListingPage({ params }: { params: { id: string } }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-xs text-muted mb-4 flex-wrap">
+        <Link href="/" className="hover:text-teal transition-colors">الرئيسية</Link>
+        <ChevronLeft className="w-3.5 h-3.5" />
+        <Link href={`/category/${cat.id}`} className="hover:text-teal transition-colors">{cat.label}</Link>
+        <ChevronLeft className="w-3.5 h-3.5" />
+        <span className="text-ink truncate">{listing.title}</span>
+      </nav>
+
       <div className="rounded-2xl overflow-hidden border border-line bg-white">
         <div
           className="h-64 flex items-center justify-center relative bg-cover bg-center"
@@ -52,7 +62,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
         )}
 
         <div className="p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge tone="teal">{cat.label}</Badge>
             {listing.featured && !isExpired && <Badge tone="amber">مميز</Badge>}
             {isExpired ? (
@@ -65,10 +75,18 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 </span>
               )
             )}
+            <span className="text-xs text-muted mr-auto">{relativeTimeAr(listing.createdAt)}</span>
           </div>
-          <h1 className="text-2xl font-display font-bold text-navy">{listing.title}</h1>
-          <p className="text-sm leading-relaxed text-ink">{listing.description}</p>
 
+          {/* Price — prominent, OpenSooq-style */}
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold text-teal font-num">{listing.price}</span>
+            <span className="text-sm text-muted">ر.ع. {cat.unit}</span>
+          </div>
+
+          <h1 className="text-xl font-display font-bold text-navy">{listing.title}</h1>
+
+          {/* Spec row */}
           {cat.isRoute ? (
             <RouteLine from={listing.fromPlace ?? ""} to={listing.toPlace ?? ""} />
           ) : (
@@ -77,6 +95,8 @@ export default async function ListingPage({ params }: { params: { id: string } }
               <span>{listing.location}</span>
             </div>
           )}
+
+          <p className="text-sm leading-relaxed text-ink border-t border-line pt-4">{listing.description}</p>
 
           {listing.lat && listing.lng && (
             <iframe
@@ -87,17 +107,12 @@ export default async function ListingPage({ params }: { params: { id: string } }
             />
           )}
 
-          <div className="flex items-center justify-between rounded-xl p-4 bg-sand">
-            <span className="text-sm text-muted">{cat.unit}</span>
-            <span className="text-2xl font-bold text-teal font-num">{listing.price} ر.ع.</span>
-          </div>
-
           {isExpired ? (
             <p className="text-sm text-center text-muted rounded-xl border border-line p-3">
-              انتهت مدة نشر هذا الإعلان ولم يعد بالإمكان حجزه.
+              انتهت مدة نشر هذا الإعلان.
             </p>
           ) : (
-            <BookingPanel listingId={listing.id} title={listing.title} price={listing.price} unit={cat.unit} />
+            <ContactPanel phone={listing.ownerPhone} title={listing.title} />
           )}
         </div>
       </div>

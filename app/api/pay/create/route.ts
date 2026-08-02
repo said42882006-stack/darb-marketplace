@@ -3,67 +3,39 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasLiveThawaniKey, createCheckoutSession, omrToBaisa } from "@/lib/thawani";
-import { PLANS, LISTING_CREDIT_PRICE_OMR, LISTING_CREDIT_AMOUNT } from "@/lib/constants";
+import { PLANS } from "@/lib/constants";
 
-// Builds the (name, amountOMR, payload) for each purchase kind, shared by both
-// the live Thawani path and the mock-confirm path so pricing can never drift.
-async function resolvePurchase(kind: string, body: any, userId?: string) {
-  if (kind === "credit") {
-    return {
-      name: `رصيد نشر - ${LISTING_CREDIT_AMOUNT} إعلانات`,
-      amountOMR: LISTING_CREDIT_PRICE_OMR,
-      payload: { userId },
-    };
-  }
+// Subscriptions are the only paid product on the platform — no per-booking or
+// per-listing-credit payments. This resolver stays kind-based in case a second
+// paid product is added later, but "subscription" is the only kind today.
+function resolvePurchase(kind: string, body: any, userId?: string) {
+  if (kind !== "subscription") return null;
 
-  if (kind === "subscription") {
-    const plan = PLANS.find((p) => p.id === body.planId);
-    if (!plan) return null;
-    const interval = body.interval === "yearly" ? "yearly" : "monthly";
-    const amountOMR = interval === "yearly" ? plan.yearlyPriceOMR : plan.monthlyPriceOMR;
-    return {
-      name: `اشتراك ${plan.name} - ${interval === "yearly" ? "سنوي" : "شهري"}`,
-      amountOMR,
-      payload: { userId, planId: plan.id, interval },
-    };
-  }
-
-  if (kind === "booking") {
-    const listing = body.listingId ? await prisma.listing.findUnique({ where: { id: body.listingId } }) : null;
-    if (body.listingId && !listing) return null;
-    const amountOMR = listing ? listing.price : Number(body.amount) || 0;
-    return {
-      name: `حجز: ${listing?.title ?? "إعلان"}`,
-      amountOMR,
-      payload: {
-        listingId: body.listingId ?? null,
-        customerName: body.customerName ?? "",
-        customerPhone: body.customerPhone ?? "",
-        customerEmail: body.customerEmail ?? null,
-        ownerEmail: listing?.ownerEmail ?? null,
-        listingTitle: listing?.title ?? "",
-        amountOMR,
-      },
-    };
-  }
-
-  return null;
+  const plan = PLANS.find((p) => p.id === body.planId);
+  if (!plan) return null;
+  const interval = body.interval === "yearly" ? "yearly" : "monthly";
+  const amountOMR = interval === "yearly" ? plan.yearlyPriceOMR : plan.monthlyPriceOMR;
+  return {
+    name: `اشتراك ${plan.name} - ${interval === "yearly" ? "سنوي" : "شهري"}`,
+    amountOMR,
+    payload: { userId, planId: plan.id, interval },
+  };
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { kind } = body;
-  if (!["credit", "subscription", "booking"].includes(kind)) {
+  if (kind !== "subscription") {
     return NextResponse.json({ success: false, message: "نوع عملية غير معروف" }, { status: 400 });
   }
 
   const session = await getServerSession(authOptions);
-  if ((kind === "credit" || kind === "subscription") && !session?.user) {
+  if (!session?.user) {
     return NextResponse.json({ success: false, message: "يجب تسجيل الدخول" }, { status: 401 });
   }
-  const userId = session?.user ? ((session.user as any).id as string) : undefined;
+  const userId = (session.user as any).id as string;
 
-  const purchase = await resolvePurchase(kind, body, userId);
+  const purchase = resolvePurchase(kind, body, userId);
   if (!purchase) {
     return NextResponse.json({ success: false, message: "طلب غير صالح" }, { status: 400 });
   }

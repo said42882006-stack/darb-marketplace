@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { CreditCard, X, ShieldCheck, Loader2, Check, ExternalLink } from "lucide-react";
 
-type Kind = "credit" | "subscription" | "booking";
+type Kind = "subscription";
 
 export default function PaymentModal({
   title,

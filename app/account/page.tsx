@@ -35,7 +35,6 @@ export default async function AccountPage() {
       name={user.name}
       email={user.email}
       phone={user.phone}
-      credits={user.listingCredits}
       subscriptionPlanName={subscriptionPlanName}
       subscriptionExpiresAt={activeSubscription?.expiresAt?.toISOString() ?? null}
       listings={listings.map((l) => ({

@@ -61,23 +61,19 @@ export async function POST(req: NextRequest) {
 
   const userId = (session.user as any).id as string;
 
-  const [listingCount, user, activeSubscription] = await Promise.all([
+  const [listingCount, activeSubscription] = await Promise.all([
     prisma.listing.count({ where: { userId } }),
-    prisma.user.findUnique({ where: { id: userId } }),
     prisma.subscriber.findFirst({
       where: { userId, active: true, expiresAt: { gt: new Date() } },
       orderBy: { expiresAt: "desc" },
     }),
   ]);
-  if (!user) {
-    return NextResponse.json({ success: false, message: "المستخدم غير موجود" }, { status: 404 });
-  }
 
   const usingFreeSlot = !activeSubscription && listingCount < FREE_LISTINGS_LIMIT;
   const usingSubscription = !!activeSubscription;
-  if (!usingFreeSlot && !usingSubscription && user.listingCredits <= 0) {
+  if (!usingFreeSlot && !usingSubscription) {
     return NextResponse.json(
-      { success: false, message: "استخدمت إعلاناتك المجانية — يلزم شراء رصيد إضافي أو الاشتراك للنشر", code: "NEEDS_CREDIT" },
+      { success: false, message: "استخدمت إعلاناتك المجانية — يلزم الاشتراك بباقة للنشر", code: "NEEDS_SUBSCRIPTION" },
       { status: 402 }
     );
   }
@@ -86,31 +82,25 @@ export async function POST(req: NextRequest) {
   const sessionUserEmail = session.user.email;
   const expiresAt = new Date(Date.now() + LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000);
 
-  const listing = await prisma.$transaction(async (tx) => {
-    const created = await tx.listing.create({
-      data: {
-        category,
-        title,
-        description,
-        price: Number(price),
-        location: location || null,
-        lat: typeof lat === "number" ? lat : null,
-        lng: typeof lng === "number" ? lng : null,
-        fromPlace: fromPlace || null,
-        toPlace: toPlace || null,
-        images: JSON.stringify(Array.isArray(images) ? images.slice(0, MAX_LISTING_IMAGES) : []),
-        ownerName: ownerName || sessionUserName || null,
-        ownerPhone: ownerPhone || null,
-        ownerEmail: sessionUserEmail || null,
-        userId,
-        expiresAt,
-        featured: usingSubscription && activeSubscription!.planId !== "basic",
-      },
-    });
-    if (!usingFreeSlot && !usingSubscription) {
-      await tx.user.update({ where: { id: userId }, data: { listingCredits: { decrement: 1 } } });
-    }
-    return created;
+  const listing = await prisma.listing.create({
+    data: {
+      category,
+      title,
+      description,
+      price: Number(price),
+      location: location || null,
+      lat: typeof lat === "number" ? lat : null,
+      lng: typeof lng === "number" ? lng : null,
+      fromPlace: fromPlace || null,
+      toPlace: toPlace || null,
+      images: JSON.stringify(Array.isArray(images) ? images.slice(0, MAX_LISTING_IMAGES) : []),
+      ownerName: ownerName || sessionUserName || null,
+      ownerPhone: ownerPhone || null,
+      ownerEmail: sessionUserEmail || null,
+      userId,
+      expiresAt,
+      featured: usingSubscription && activeSubscription!.planId !== "basic",
+    },
   });
 
   return NextResponse.json({ success: true, listing });

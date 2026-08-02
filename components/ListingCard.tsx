@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { MapPin, Home, Car, Palmtree, Waves, Truck } from "lucide-react";
+import { MapPin, Clock } from "lucide-react";
 import { CATEGORY_MAP } from "@/lib/constants";
+import { CATEGORY_ICONS } from "@/lib/categoryIcons";
+import { relativeTimeAr } from "@/lib/relativeTime";
 import Badge from "./Badge";
 import RouteLine from "./RouteLine";
-
-const ICONS: Record<string, typeof Home> = { homes: Home, cars: Car, chalets: Palmtree, resorts: Waves, delivery: Truck };
 
 function parseFirstImage(images?: string): string | null {
   if (!images) return null;
@@ -26,12 +26,13 @@ export interface ListingCardData {
   fromPlace?: string | null;
   toPlace?: string | null;
   featured: boolean;
+  createdAt?: Date | string;
 }
 
 export default function ListingCard({ listing }: { listing: ListingCardData & { images?: string } }) {
   const cat = CATEGORY_MAP[listing.category];
   if (!cat) return null;
-  const Icon = ICONS[listing.category] ?? Home;
+  const Icon = CATEGORY_ICONS[listing.category as keyof typeof CATEGORY_ICONS] ?? CATEGORY_ICONS.other;
   const firstImage = parseFirstImage(listing.images);
 
   return (
@@ -65,11 +66,17 @@ export default function ListingCard({ listing }: { listing: ListingCardData & { 
           </div>
         )}
         <div className="flex items-center justify-between pt-2 mt-1 border-t border-line">
-          <span className="text-xs text-muted">{cat.unit}</span>
+          <span className="text-xs text-muted flex items-center gap-1">
+            {listing.createdAt && (
+              <>
+                <Clock className="w-3 h-3" />
+                {relativeTimeAr(listing.createdAt)}
+              </>
+            )}
+          </span>
           <span className="text-lg font-bold text-teal font-num">{listing.price} ر.ع.</span>
         </div>
       </div>
     </Link>
   );
 }
-
