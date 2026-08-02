@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ImagePlus, X, Loader2 } from "lucide-react";
+import { MAX_LISTING_IMAGES } from "@/lib/constants";
 
 export default function ImageUploader({
   images,
@@ -27,7 +28,7 @@ export default function ImageUploader({
       if (!res.ok || !data.success) {
         setError(data.message ?? "تعذّر رفع الصور");
       } else {
-        onChange([...images, ...data.urls].slice(0, 6));
+        onChange([...images, ...data.urls].slice(0, MAX_LISTING_IMAGES));
       }
     } catch {
       setError("تعذّر الاتصال بالخادم أثناء رفع الصور");
@@ -43,7 +44,7 @@ export default function ImageUploader({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-ink">صور الإعلان (حتى 6 صور)</span>
+      <span className="text-sm font-medium text-ink">صور الإعلان (حتى {MAX_LISTING_IMAGES} صور)</span>
       <div className="flex flex-wrap gap-3">
         {images.map((url, idx) => (
           <div key={url} className="relative w-20 h-20 rounded-lg overflow-hidden border border-line">
@@ -60,7 +61,7 @@ export default function ImageUploader({
           </div>
         ))}
 
-        {images.length < 6 && (
+        {images.length < MAX_LISTING_IMAGES && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}

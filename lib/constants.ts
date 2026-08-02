@@ -31,6 +31,8 @@ export function categoryUnit(c: CategoryDef, locale: "ar" | "en") {
 }
 
 export const FREE_LISTINGS_LIMIT = 3;
+export const MAX_LISTING_IMAGES = 10;
+export const LISTING_LIFETIME_DAYS = 14;
 // Thawani bills in OMR only, so the earlier "$1" is priced here as its OMR equivalent.
 export const LISTING_CREDIT_PRICE_OMR = 0.4; // buys LISTING_CREDIT_AMOUNT extra listings
 export const LISTING_CREDIT_AMOUNT = 2;

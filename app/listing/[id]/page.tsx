@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { MapPin, Home, Car, Palmtree, Waves, Truck } from "lucide-react";
+import { MapPin, Home, Car, Palmtree, Waves, Truck, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CATEGORY_MAP } from "@/lib/constants";
 import Badge from "@/components/Badge";
@@ -27,6 +27,10 @@ export default async function ListingPage({ params }: { params: { id: string } }
   const Icon = ICONS[listing.category] ?? Home;
   const images = parseImages(listing.images);
   const mainImage = images[0];
+  const isExpired = !!listing.expiresAt && listing.expiresAt < new Date();
+  const daysLeft = listing.expiresAt
+    ? Math.max(0, Math.ceil((listing.expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : null;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
@@ -50,7 +54,17 @@ export default async function ListingPage({ params }: { params: { id: string } }
         <div className="p-6 flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <Badge tone="teal">{cat.label}</Badge>
-            {listing.featured && <Badge tone="amber">مميز</Badge>}
+            {listing.featured && !isExpired && <Badge tone="amber">مميز</Badge>}
+            {isExpired ? (
+              <Badge tone="amber">انتهت مدة الإعلان</Badge>
+            ) : (
+              daysLeft !== null && (
+                <span className="inline-flex items-center gap-1 text-xs text-muted">
+                  <Clock className="w-3.5 h-3.5" />
+                  ينتهي خلال {daysLeft} يوم
+                </span>
+              )
+            )}
           </div>
           <h1 className="text-2xl font-display font-bold text-navy">{listing.title}</h1>
           <p className="text-sm leading-relaxed text-ink">{listing.description}</p>
@@ -78,7 +92,13 @@ export default async function ListingPage({ params }: { params: { id: string } }
             <span className="text-2xl font-bold text-teal font-num">{listing.price} ر.ع.</span>
           </div>
 
-          <BookingPanel listingId={listing.id} title={listing.title} price={listing.price} unit={cat.unit} />
+          {isExpired ? (
+            <p className="text-sm text-center text-muted rounded-xl border border-line p-3">
+              انتهت مدة نشر هذا الإعلان ولم يعد بالإمكان حجزه.
+            </p>
+          ) : (
+            <BookingPanel listingId={listing.id} title={listing.title} price={listing.price} unit={cat.unit} />
+          )}
         </div>
       </div>
     </div>

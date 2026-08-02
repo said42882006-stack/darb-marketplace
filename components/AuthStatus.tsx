@@ -29,10 +29,13 @@ export default function AuthStatus() {
 
   return (
     <div className="flex items-center gap-2 shrink-0">
-      <span className="hidden sm:flex items-center gap-1.5 text-sm text-white">
+      <Link href="/account" className="hidden sm:flex items-center gap-1.5 text-sm text-white hover:text-sand transition-colors">
         <User className="w-4 h-4" />
         {session.user?.name}
-      </span>
+      </Link>
+      <Link href="/account" className="sm:hidden flex items-center text-white focus:outline-none focus:ring-2 focus:ring-teal rounded-full p-1" aria-label="حسابي">
+        <User className="w-5 h-5" />
+      </Link>
       <button
         onClick={() => signOut({ callbackUrl: "/" })}
         className="flex items-center gap-1 text-sm text-sand/90 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-teal rounded-full px-2 py-1"

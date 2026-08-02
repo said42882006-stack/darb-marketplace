@@ -32,12 +32,16 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) token.id = (user as any).id;
+      if (trigger === "update" && session?.name) token.name = session.name;
       return token;
     },
     async session({ session, token }) {
-      if (session.user) (session.user as any).id = token.id as string;
+      if (session.user) {
+        (session.user as any).id = token.id as string;
+        session.user.name = token.name as string;
+      }
       return session;
     },
   },

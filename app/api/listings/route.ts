@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { FREE_LISTINGS_LIMIT } from "@/lib/constants";
+import { FREE_LISTINGS_LIMIT, MAX_LISTING_IMAGES, LISTING_LIFETIME_DAYS } from "@/lib/constants";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -12,16 +12,20 @@ export async function GET(req: NextRequest) {
   const max = searchParams.get("max");
   const sort = searchParams.get("sort") ?? "newest";
 
-  const where: any = {};
+  const where: any = {
+    AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] }],
+  };
   if (category) where.category = category;
   if (q) {
-    where.OR = [
-      { title: { contains: q } },
-      { description: { contains: q } },
-      { location: { contains: q } },
-      { fromPlace: { contains: q } },
-      { toPlace: { contains: q } },
-    ];
+    where.AND.push({
+      OR: [
+        { title: { contains: q } },
+        { description: { contains: q } },
+        { location: { contains: q } },
+        { fromPlace: { contains: q } },
+        { toPlace: { contains: q } },
+      ],
+    });
   }
   if (min || max) {
     where.price = {};
@@ -80,6 +84,7 @@ export async function POST(req: NextRequest) {
 
   const sessionUserName = session.user.name;
   const sessionUserEmail = session.user.email;
+  const expiresAt = new Date(Date.now() + LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000);
 
   const listing = await prisma.$transaction(async (tx) => {
     const created = await tx.listing.create({
@@ -93,11 +98,12 @@ export async function POST(req: NextRequest) {
         lng: typeof lng === "number" ? lng : null,
         fromPlace: fromPlace || null,
         toPlace: toPlace || null,
-        images: JSON.stringify(Array.isArray(images) ? images.slice(0, 6) : []),
+        images: JSON.stringify(Array.isArray(images) ? images.slice(0, MAX_LISTING_IMAGES) : []),
         ownerName: ownerName || sessionUserName || null,
         ownerPhone: ownerPhone || null,
         ownerEmail: sessionUserEmail || null,
         userId,
+        expiresAt,
         featured: usingSubscription && activeSubscription!.planId !== "basic",
       },
     });

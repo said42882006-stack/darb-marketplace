@@ -19,15 +19,20 @@ export default async function CategoryPage({
 
   const { q, min, max, sort } = searchParams;
 
-  const where: any = { category: category.id };
+  const where: any = {
+    category: category.id,
+    AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] }],
+  };
   if (q) {
-    where.OR = [
-      { title: { contains: q } },
-      { description: { contains: q } },
-      { location: { contains: q } },
-      { fromPlace: { contains: q } },
-      { toPlace: { contains: q } },
-    ];
+    where.AND.push({
+      OR: [
+        { title: { contains: q } },
+        { description: { contains: q } },
+        { location: { contains: q } },
+        { fromPlace: { contains: q } },
+        { toPlace: { contains: q } },
+      ],
+    });
   }
   if (min || max) {
     where.price = {};

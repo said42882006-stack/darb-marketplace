@@ -2,18 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
+import { put } from "@vercel/blob";
+import { MAX_LISTING_IMAGES } from "@/lib/constants";
 
-// Local-dev implementation: files are written to /public/uploads and served statically.
-// NOTE: Vercel's serverless filesystem is read-only (except /tmp) and ephemeral, so this
-// approach does NOT persist in that kind of production deployment. For production, swap this
-// handler to upload to Cloudinary / Vercel Blob / S3 and return the resulting hosted URL instead.
-//
-// Cloudinary example (once CLOUDINARY_URL is set):
-// const cloudinary = require("cloudinary").v2;
-// const result = await cloudinary.uploader.upload(dataUri);
-// return NextResponse.json({ url: result.secure_url });
+// Uses Vercel Blob when BLOB_READ_WRITE_TOKEN is set (production on Vercel — persistent,
+// hosted storage). Falls back to writing into /public/uploads on disk otherwise, which works
+// fine for local development but does NOT persist on Vercel's serverless filesystem.
 
-const MAX_FILES = 6;
+const MAX_FILES = MAX_LISTING_IMAGES;
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 
@@ -28,8 +24,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: `الحد الأقصى ${MAX_FILES} صور` }, { status: 400 });
   }
 
+  const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
   const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
+  if (!useBlob) await mkdir(uploadDir, { recursive: true });
 
   const urls: string[] = [];
   for (const file of files) {
@@ -41,9 +38,15 @@ export async function POST(req: NextRequest) {
     }
     const ext = file.type.split("/")[1];
     const filename = `${randomUUID()}.${ext}`;
-    const bytes = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadDir, filename), bytes);
-    urls.push(`/uploads/${filename}`);
+
+    if (useBlob) {
+      const blob = await put(`listings/${filename}`, file, { access: "public" });
+      urls.push(blob.url);
+    } else {
+      const bytes = Buffer.from(await file.arrayBuffer());
+      await writeFile(path.join(uploadDir, filename), bytes);
+      urls.push(`/uploads/${filename}`);
+    }
   }
 
   return NextResponse.json({ success: true, urls });

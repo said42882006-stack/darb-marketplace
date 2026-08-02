@@ -13,18 +13,25 @@ export default async function HomePage({
 }) {
   const q = searchParams.q?.trim();
 
+  const notExpired = { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] };
+
   const listings = await prisma.listing.findMany({
     where: q
       ? {
-          OR: [
-            { title: { contains: q } },
-            { description: { contains: q } },
-            { location: { contains: q } },
-            { fromPlace: { contains: q } },
-            { toPlace: { contains: q } },
+          AND: [
+            notExpired,
+            {
+              OR: [
+                { title: { contains: q } },
+                { description: { contains: q } },
+                { location: { contains: q } },
+                { fromPlace: { contains: q } },
+                { toPlace: { contains: q } },
+              ],
+            },
           ],
         }
-      : undefined,
+      : notExpired,
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     take: 24,
   });

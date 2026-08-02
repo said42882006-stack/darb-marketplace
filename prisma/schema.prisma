@@ -43,6 +43,7 @@ model Listing {
   userId      String?
   user        User?    @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
+  expiresAt   DateTime? // set to createdAt + 14 days at posting time; null = never expires (legacy/demo rows)
 
   @@index([category])
 }
