@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { FREE_LISTINGS_LIMIT, MAX_LISTING_IMAGES, LISTING_LIFETIME_DAYS } from "@/lib/constants";
+import { CATEGORY_ATTRIBUTES } from "@/lib/categoryAttributes";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -32,6 +33,14 @@ export async function GET(req: NextRequest) {
     if (min) where.price.gte = Number(min);
     if (max) where.price.lte = Number(max);
   }
+  // Category-specific attribute filter, e.g. ?transmission=automatic for cars
+  const attrDef = category ? CATEGORY_ATTRIBUTES[category as keyof typeof CATEGORY_ATTRIBUTES] : undefined;
+  if (attrDef) {
+    const attrValue = searchParams.get(attrDef.key);
+    if (attrValue) {
+      where.attributes = { path: [attrDef.key], equals: attrValue };
+    }
+  }
 
   const orderBy =
     sort === "price_asc" ? { price: "asc" as const } :
@@ -52,7 +61,7 @@ export async function POST(req: NextRequest) {
   const {
     category, title, description, price,
     location, lat, lng, fromPlace, toPlace,
-    images, ownerName, ownerPhone,
+    images, ownerName, ownerPhone, attributes,
   } = body;
 
   if (!category || !title || !description || !price) {
@@ -94,6 +103,7 @@ export async function POST(req: NextRequest) {
       fromPlace: fromPlace || null,
       toPlace: toPlace || null,
       images: JSON.stringify(Array.isArray(images) ? images.slice(0, MAX_LISTING_IMAGES) : []),
+      attributes: attributes && typeof attributes === "object" ? attributes : {},
       ownerName: ownerName || sessionUserName || null,
       ownerPhone: ownerPhone || null,
       ownerEmail: sessionUserEmail || null,

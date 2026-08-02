@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Clock, ChevronLeft } from "lucide-react";
+import { MapPin, Clock, ChevronLeft, Tag } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CATEGORY_MAP } from "@/lib/constants";
 import { CATEGORY_ICONS } from "@/lib/categoryIcons";
+import { CATEGORY_ATTRIBUTES, attributeOptionLabel } from "@/lib/categoryAttributes";
 import { relativeTimeAr } from "@/lib/relativeTime";
 import Badge from "@/components/Badge";
 import RouteLine from "@/components/RouteLine";
@@ -32,6 +33,11 @@ export default async function ListingPage({ params }: { params: { id: string } }
   const daysLeft = listing.expiresAt
     ? Math.max(0, Math.ceil((listing.expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : null;
+  const attrDef = CATEGORY_ATTRIBUTES[listing.category as keyof typeof CATEGORY_ATTRIBUTES];
+  const attrRaw = listing.attributes && typeof listing.attributes === "object"
+    ? (listing.attributes as Record<string, string>)[attrDef?.key ?? ""]
+    : undefined;
+  const attrLabel = attrRaw ? attributeOptionLabel(listing.category, attrRaw) : null;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
@@ -87,6 +93,12 @@ export default async function ListingPage({ params }: { params: { id: string } }
           <h1 className="text-xl font-display font-bold text-navy">{listing.title}</h1>
 
           {/* Spec row */}
+          {attrDef && attrLabel && (
+            <span className="inline-flex items-center gap-1.5 text-sm text-teal font-medium w-fit bg-sand rounded-lg px-2.5 py-1">
+              <Tag className="w-3.5 h-3.5" />
+              {attrDef.label}: {attrLabel}
+            </span>
+          )}
           {cat.isRoute ? (
             <RouteLine from={listing.fromPlace ?? ""} to={listing.toPlace ?? ""} />
           ) : (

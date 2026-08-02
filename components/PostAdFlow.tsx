@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Gift, CheckCircle2 } from "lucide-react";
 import { CATEGORIES } from "@/lib/constants";
+import { CATEGORY_ATTRIBUTES } from "@/lib/categoryAttributes";
 import ImageUploader from "./ImageUploader";
 import LocationPicker, { LocationValue } from "./LocationPicker";
 
@@ -37,8 +38,10 @@ export default function PostAdFlow({
     ownerName: "",
     ownerPhone: "",
   });
+  const [attrValue, setAttrValue] = useState("");
 
   const catDef = CATEGORIES.find((c) => c.id === form.category)!;
+  const attrDef = CATEGORY_ATTRIBUTES[form.category as keyof typeof CATEGORY_ATTRIBUTES];
   const canPublish =
     form.title &&
     form.description &&
@@ -63,6 +66,7 @@ export default function PostAdFlow({
         lng: location.lng,
         fromPlace: fromLocation.address,
         toPlace: toLocation.address,
+        attributes: attrDef && attrValue ? { [attrDef.key]: attrValue } : {},
       }),
     });
     const data = await res.json();
@@ -115,7 +119,7 @@ export default function PostAdFlow({
             القسم
             <select
               value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              onChange={(e) => { setForm({ ...form, category: e.target.value }); setAttrValue(""); }}
               className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal bg-white"
             >
               {CATEGORIES.map((c) => (
@@ -141,6 +145,22 @@ export default function PostAdFlow({
               className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
               placeholder="0" />
           </label>
+
+          {attrDef && (
+            <label className="text-sm font-medium text-ink">
+              {attrDef.label}
+              <select
+                value={attrValue}
+                onChange={(e) => setAttrValue(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal bg-white"
+              >
+                <option value="">— اختر —</option>
+                {attrDef.options.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
 
           {catDef.isRoute ? (
             <div className="flex flex-col sm:flex-row gap-3">

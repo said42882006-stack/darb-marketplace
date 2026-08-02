@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { MapPin, Clock } from "lucide-react";
+import { MapPin, Clock, Tag } from "lucide-react";
 import { CATEGORY_MAP } from "@/lib/constants";
 import { CATEGORY_ICONS } from "@/lib/categoryIcons";
+import { attributeOptionLabel } from "@/lib/categoryAttributes";
 import { relativeTimeAr } from "@/lib/relativeTime";
 import Badge from "./Badge";
 import RouteLine from "./RouteLine";
@@ -16,6 +17,13 @@ function parseFirstImage(images?: string): string | null {
   }
 }
 
+function firstAttributeLabel(category: string, attributes: unknown): string | null {
+  if (!attributes || typeof attributes !== "object") return null;
+  const entries = Object.entries(attributes as Record<string, string>);
+  if (entries.length === 0) return null;
+  return attributeOptionLabel(category, entries[0][1]);
+}
+
 export interface ListingCardData {
   id: string;
   category: string;
@@ -27,6 +35,7 @@ export interface ListingCardData {
   toPlace?: string | null;
   featured: boolean;
   createdAt?: Date | string;
+  attributes?: unknown;
 }
 
 export default function ListingCard({ listing }: { listing: ListingCardData & { images?: string } }) {
@@ -34,6 +43,7 @@ export default function ListingCard({ listing }: { listing: ListingCardData & { 
   if (!cat) return null;
   const Icon = CATEGORY_ICONS[listing.category as keyof typeof CATEGORY_ICONS] ?? CATEGORY_ICONS.other;
   const firstImage = parseFirstImage(listing.images);
+  const attrLabel = firstAttributeLabel(listing.category, listing.attributes);
 
   return (
     <Link
@@ -57,6 +67,12 @@ export default function ListingCard({ listing }: { listing: ListingCardData & { 
       <div className="p-4 flex flex-col gap-2">
         <h3 className="font-bold text-base leading-snug text-navy font-num">{listing.title}</h3>
         <p className="text-sm line-clamp-2 text-muted">{listing.description}</p>
+        {attrLabel && (
+          <span className="inline-flex items-center gap-1 text-xs text-teal font-medium w-fit">
+            <Tag className="w-3 h-3" />
+            {attrLabel}
+          </span>
+        )}
         {cat.isRoute ? (
           <RouteLine from={listing.fromPlace ?? ""} to={listing.toPlace ?? ""} />
         ) : (

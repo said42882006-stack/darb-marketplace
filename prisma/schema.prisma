@@ -37,6 +37,7 @@ model Listing {
   fromPlace   String? // used by route-based categories (trucks, oil_transport, delivery)
   toPlace     String? // used by route-based categories (trucks, oil_transport, delivery)
   images      String   @default("[]") // JSON-stringified array of image URLs
+  attributes  Json     @default("{}") // category-specific spec, e.g. {"transmission":"automatic"}
   featured    Boolean  @default(false)
   ownerName   String?
   ownerPhone  String?
