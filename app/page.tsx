@@ -71,7 +71,7 @@ export default async function HomePage({
       </section>
 
       {/* Category shortcuts */}
-      <section className="max-w-6xl mx-auto px-4 pb-2">
+      <section id="categories" className="max-w-6xl mx-auto px-4 pb-2 scroll-mt-40">
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
           {CATEGORIES.map((c) => {
             const Icon = CATEGORY_ICONS[c.id];
@@ -103,6 +103,29 @@ export default async function HomePage({
             ))}
           </div>
         )}
+      </section>
+      {/* CTA section */}
+      <section className="bg-sand-deep/40 border-y border-line mt-10">
+        <div className="max-w-6xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="rounded-2xl bg-white border border-line p-6 flex flex-col items-center text-center gap-3">
+            <Search className="w-10 h-10 text-teal" strokeWidth={1.5} />
+            <h3 className="font-bold text-lg text-navy">ابحث . تواصل . استأجر</h3>
+            <p className="text-sm text-muted">تصفّح الإعلانات بأقسامها الاثني عشر، وتواصل مع المعلن مباشرة عبر الاتصال أو واتساب.</p>
+            <Link href="#categories" className="mt-1 rounded-xl px-6 py-2.5 font-bold bg-navy text-white hover:bg-navy-deep transition-colors">
+              تصفّح الأقسام
+            </Link>
+          </div>
+          <div className="rounded-2xl bg-white border border-line p-6 flex flex-col items-center text-center gap-3">
+            <svg className="w-10 h-10 text-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M21 3l-7 7M3 21l7-7" />
+            </svg>
+            <h3 className="font-bold text-lg text-navy">صوّر . انشر . أجّر</h3>
+            <p className="text-sm text-muted">3 إعلانات مجانية لكل مستخدم، ثم اشترك بباقة شهرية أو سنوية لنشر غير محدود.</p>
+            <Link href="/post" className="mt-1 rounded-xl px-6 py-2.5 font-bold bg-amber text-white hover:bg-amber-deep transition-colors">
+              أضف إعلانك الآن
+            </Link>
+          </div>
+        </div>
       </section>
     </>
   );

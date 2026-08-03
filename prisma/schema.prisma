@@ -13,16 +13,35 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   name      String
-  email     String   @unique
-  phone     String?
+  email     String?  @unique // optional — can be added for notifications/confirmations, not required to sign up
+  phone     String   @unique // primary login identifier, verified via WhatsApp OTP before the account is created
   password  String // bcrypt hash
-  emailVerified     Boolean   @default(false)
+  photo     String? // profile photo URL (Vercel Blob)
+  gender    String? // male | female
+  birthdate DateTime?
+  accountType String @default("personal") // personal | business
+  emailVerified     Boolean   @default(false) // irrelevant/true when no email was provided
   verifyToken       String?   @unique
   verifyTokenExpiry DateTime?
+  phoneVerified     Boolean   @default(true) // always true at creation — phone is verified before the account exists
   createdAt DateTime @default(now())
 
   listings    Listing[]
   subscribers Subscriber[]
+}
+
+// Verifies a phone number via WhatsApp OTP independently of any User account —
+// used before registration (no account exists yet) and when an existing user
+// changes their phone number from the account page.
+model PhoneVerification {
+  id         String    @id @default(cuid())
+  phone      String    @unique
+  code       String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  verified   Boolean   @default(false)
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
 }
 
 model Listing {

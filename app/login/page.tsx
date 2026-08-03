@@ -4,48 +4,30 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogIn, MailCheck } from "lucide-react";
+import { LogIn, Phone } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ phone: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [needsVerification, setNeedsVerification] = useState(false);
-  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setNeedsVerification(false);
     const res = await signIn("credentials", {
-      email: form.email,
+      phone: form.phone,
       password: form.password,
       redirect: false,
     });
     setLoading(false);
     if (res?.error) {
-      if (res.error.includes("تأكيد بريدك")) {
-        setNeedsVerification(true);
-        setError(res.error);
-      } else {
-        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
-      }
+      setError("رقم الجوال أو كلمة المرور غير صحيحة");
       return;
     }
     router.push("/post");
     router.refresh();
-  };
-
-  const resend = async () => {
-    setResendState("sending");
-    await fetch("/api/auth/resend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: form.email }),
-    });
-    setResendState("sent");
   };
 
   return (
@@ -57,34 +39,18 @@ export default function LoginPage() {
       <form onSubmit={submit} className="flex flex-col gap-3">
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        {needsVerification && (
-          <div className="rounded-xl border border-amber/40 bg-sand p-3 flex flex-col gap-2">
-            <p className="text-xs text-ink flex items-center gap-1.5">
-              <MailCheck className="w-4 h-4 text-amber shrink-0" />
-              لم يوصلك الإيميل؟
-            </p>
-            <button
-              type="button"
-              onClick={resend}
-              disabled={resendState !== "idle"}
-              className="text-xs font-bold text-teal underline disabled:opacity-60 text-right"
-            >
-              {resendState === "idle" && "أعد إرسال رابط التأكيد"}
-              {resendState === "sending" && "جارٍ الإرسال..."}
-              {resendState === "sent" && "تم الإرسال ✅ تحقق من بريدك"}
-            </button>
-          </div>
-        )}
-
         <label className="text-sm font-medium text-ink">
-          البريد الإلكتروني
-          <input
-            required
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
-          />
+          رقم الجوال
+          <div className="mt-1 flex items-center gap-2 rounded-lg border border-line px-3 py-2 focus-within:ring-2 focus-within:ring-teal">
+            <Phone className="w-4 h-4 text-muted shrink-0" />
+            <input
+              required
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              placeholder="9xxxxxxx"
+              className="flex-1 min-w-0 text-sm focus:outline-none"
+            />
+          </div>
         </label>
         <label className="text-sm font-medium text-ink">
           كلمة المرور

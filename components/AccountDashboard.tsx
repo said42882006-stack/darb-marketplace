@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { User, Trash2, Gift, CreditCard, CheckCircle2, Clock } from "lucide-react";
+import { User, Trash2, CreditCard, CheckCircle2, Clock } from "lucide-react";
 import { CATEGORY_MAP } from "@/lib/constants";
+import PhoneOtpForm from "./PhoneOtpForm";
+import AvatarUploader from "./AvatarUploader";
 
 interface ListingRow {
   id: string;
@@ -19,36 +21,51 @@ export default function AccountDashboard({
   name,
   email,
   phone,
+  photo,
+  gender,
+  birthdate,
+  accountType,
   subscriptionPlanName,
   subscriptionExpiresAt,
   listings,
 }: {
   name: string;
-  email: string;
-  phone: string | null;
+  email: string | null;
+  phone: string;
+  photo: string | null;
+  gender: string | null;
+  birthdate: string | null;
+  accountType: string;
   subscriptionPlanName: string | null;
   subscriptionExpiresAt: string | null;
   listings: ListingRow[];
 }) {
   const { update } = useSession();
 
-  const [form, setForm] = useState({ name, phone: phone ?? "" });
+  const [form, setForm] = useState({
+    name,
+    phone,
+    gender: gender ?? "",
+    birthdate: birthdate ?? "",
+    accountType: accountType ?? "personal",
+  });
+  const [photoUrl, setPhotoUrl] = useState<string | null>(photo);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [awaitingOtpFor, setAwaitingOtpFor] = useState<string | null>(null);
 
   const [rows, setRows] = useState(listings);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const saveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const doSave = async (dataOverride?: Partial<typeof form>) => {
     setSaving(true);
     setError("");
     setSaved(false);
     const res = await fetch("/api/account", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, ...dataOverride, photo: photoUrl }),
     });
     const data = await res.json();
     setSaving(false);
@@ -57,8 +74,25 @@ export default function AccountDashboard({
       return;
     }
     setSaved(true);
-    await update({ name: data.name });
+    await update({ name: data.name, phone: data.phone });
     setTimeout(() => setSaved(false), 2500);
+  };
+
+  const saveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const phoneChanged = form.phone !== phone;
+    if (phoneChanged) {
+      setSaving(true);
+      await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone }),
+      });
+      setSaving(false);
+      setAwaitingOtpFor(form.phone);
+      return;
+    }
+    await doSave();
   };
 
   const deleteListing = async (id: string) => {
@@ -73,6 +107,20 @@ export default function AccountDashboard({
     }
     setRows((prev) => prev.filter((r) => r.id !== id));
   };
+
+  if (awaitingOtpFor) {
+    return (
+      <div className="max-w-sm mx-auto px-4 py-16">
+        <PhoneOtpForm
+          phone={awaitingOtpFor}
+          onVerified={async () => {
+            setAwaitingOtpFor(null);
+            await doSave();
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 flex flex-col gap-8">
@@ -106,9 +154,12 @@ export default function AccountDashboard({
       </div>
 
       {/* Profile form */}
-      <form onSubmit={saveProfile} className="rounded-xl border border-line bg-white p-5 flex flex-col gap-3">
+      <form onSubmit={saveProfile} className="rounded-xl border border-line bg-white p-5 flex flex-col gap-4">
         <h2 className="font-bold text-navy">البيانات الشخصية</h2>
         {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <AvatarUploader value={photoUrl} onChange={setPhotoUrl} />
+
         <label className="text-sm font-medium text-ink">
           الاسم
           <input
@@ -119,21 +170,59 @@ export default function AccountDashboard({
           />
         </label>
         <label className="text-sm font-medium text-ink">
-          البريد الإلكتروني
-          <input
-            disabled
-            value={email}
-            className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm bg-sand text-muted cursor-not-allowed"
-          />
-        </label>
-        <label className="text-sm font-medium text-ink">
           رقم الجوال
           <input
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
           />
+          {form.phone !== phone && (
+            <span className="text-xs text-amber block mt-1">سيُطلب منك تأكيد الرقم الجديد عبر واتساب بعد الحفظ.</span>
+          )}
         </label>
+        <label className="text-sm font-medium text-ink">
+          البريد الإلكتروني
+          <input
+            disabled
+            value={email ?? "لم يُضف بريد إلكتروني"}
+            className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm bg-sand text-muted cursor-not-allowed"
+          />
+        </label>
+        <label className="text-sm font-medium text-ink">
+          الجنس
+          <select
+            value={form.gender}
+            onChange={(e) => setForm({ ...form, gender: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal bg-white"
+          >
+            <option value="">غير محدد</option>
+            <option value="male">ذكر</option>
+            <option value="female">أنثى</option>
+          </select>
+        </label>
+        <label className="text-sm font-medium text-ink">
+          تاريخ الميلاد
+          <input
+            type="date"
+            value={form.birthdate}
+            onChange={(e) => setForm({ ...form, birthdate: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal"
+          />
+        </label>
+        <div className="text-sm font-medium text-ink flex flex-col gap-2">
+          نوع الحساب
+          <div className="flex gap-2">
+            <label className="flex-1 flex items-center gap-2 rounded-xl border border-line p-3 cursor-pointer has-[:checked]:border-teal has-[:checked]:bg-sand">
+              <input type="radio" checked={form.accountType === "personal"} onChange={() => setForm({ ...form, accountType: "personal" })} />
+              شخصي
+            </label>
+            <label className="flex-1 flex items-center gap-2 rounded-xl border border-line p-3 cursor-pointer has-[:checked]:border-teal has-[:checked]:bg-sand">
+              <input type="radio" checked={form.accountType === "business"} onChange={() => setForm({ ...form, accountType: "business" })} />
+              تجاري
+            </label>
+          </div>
+        </div>
+
         <button
           disabled={saving}
           type="submit"

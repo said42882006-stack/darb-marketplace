@@ -1,14 +1,5 @@
 import { Phone, MessageCircle } from "lucide-react";
-
-function toWhatsAppDigits(phone: string) {
-  // Strip everything but digits; if it looks like a local Omani number (starts with 0
-  // or is 8 digits), prefix the country code 968 so the wa.me link resolves correctly.
-  let digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("00")) digits = digits.slice(2);
-  if (digits.startsWith("0")) digits = digits.slice(1);
-  if (digits.length === 8) digits = `968${digits}`;
-  return digits;
-}
+import { toWhatsAppDigits } from "@/lib/phone";
 
 export default function ContactPanel({ phone, title }: { phone: string | null; title: string }) {
   if (!phone) {
