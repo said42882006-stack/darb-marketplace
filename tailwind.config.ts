@@ -6,12 +6,12 @@ const config: Config = {
     extend: {
       colors: {
         navy: { DEFAULT: "#1B2A4A", deep: "#101B32" },
-        sand: { DEFAULT: "#F4EFE4", deep: "#EAE1CC" },
+        sand: { DEFAULT: "#F7F8FA", deep: "#EDF0F2" },
         teal: { DEFAULT: "#2F6F6B", deep: "#204E4B" },
         amber: { DEFAULT: "#C98A3E", deep: "#7A4F1E" },
         ink: "#2B2418",
         muted: "#7A7362",
-        line: "#DCD2B8",
+        line: "#E4E7EB",
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],
