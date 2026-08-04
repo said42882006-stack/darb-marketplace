@@ -38,7 +38,7 @@ export default function AuthStatus() {
         className="flex items-center gap-1.5 text-sm text-white hover:text-sand transition-colors focus:outline-none focus:ring-2 focus:ring-teal rounded-full px-1"
       >
         <User className="w-5 h-5" />
-        <span className="hidden sm:inline font-num">{phone ?? session.user?.name}</span>
+        <span className="hidden sm:inline">{session.user?.name}</span>
         <ChevronDown className="w-3.5 h-3.5" />
       </button>
 
@@ -51,8 +51,8 @@ export default function AuthStatus() {
           />
           <div className="absolute left-0 top-full mt-2 w-56 rounded-xl border border-line bg-white shadow-lg z-50 overflow-hidden">
             <div className="p-3 border-b border-line">
-              <p className="font-num text-sm font-bold text-navy">{phone}</p>
-              <p className="text-xs text-muted">{session.user?.name}</p>
+              <p className="text-sm font-bold text-navy">{session.user?.name}</p>
+              <p className="font-num text-xs text-muted">{phone}</p>
             </div>
             <nav className="flex flex-col p-1">
               <Link href="/" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-sand rounded-lg transition-colors">
