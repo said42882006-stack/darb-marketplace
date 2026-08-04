@@ -24,14 +24,21 @@ export default function ImageUploader({
 
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
+      const text = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setError(`خطأ غير متوقع من الخادم (${res.status}): ${text.slice(0, 200)}`);
+        return;
+      }
       if (!res.ok || !data.success) {
-        setError(data.message ?? "تعذّر رفع الصور");
+        setError(`${data.message ?? "تعذّر رفع الصور"} (${res.status})`);
       } else {
         onChange([...images, ...data.urls].slice(0, MAX_LISTING_IMAGES));
       }
-    } catch {
-      setError("تعذّر الاتصال بالخادم أثناء رفع الصور");
+    } catch (err) {
+      setError(`تعذّر الاتصال بالخادم: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
