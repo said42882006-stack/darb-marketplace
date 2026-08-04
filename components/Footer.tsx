@@ -42,6 +42,14 @@ export default function Footer() {
             <li><Link href="/register" className="hover:text-teal transition-colors">إنشاء حساب</Link></li>
           </ul>
         </div>
+        <div>
+          <h3 className="font-bold text-sm text-navy mb-3">تعرّف علينا</h3>
+          <ul className="flex flex-col gap-2 text-sm text-muted">
+            <li><Link href="/about" className="hover:text-teal transition-colors">عن الموقع</Link></li>
+            <li><Link href="/terms" className="hover:text-teal transition-colors">الشروط والأحكام</Link></li>
+            <li><Link href="/contact" className="hover:text-teal transition-colors">تواصل معنا</Link></li>
+          </ul>
+        </div>
       </div>
 
       {/* Bottom bar */}

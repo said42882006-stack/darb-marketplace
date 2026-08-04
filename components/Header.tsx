@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Search, Phone, MapPin } from "lucide-react";
+import { Plus, Search, MapPin } from "lucide-react";
 import { CATEGORIES, categoryLabel } from "@/lib/constants";
 import AuthStatus from "./AuthStatus";
 import LanguageToggle from "./LanguageToggle";
@@ -20,10 +20,11 @@ export default function Header() {
             عُمان - كل المدن
           </span>
           <div className="flex items-center gap-3">
-            <a href="tel:+96800000000" className="hidden sm:flex items-center gap-1 hover:text-white transition-colors">
-              <Phone className="w-3.5 h-3.5" />
-              تواصل معنا
-            </a>
+            <nav className="hidden sm:flex items-center gap-3">
+              <Link href="/about" className="hover:text-white transition-colors">عن الموقع</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">الشروط والأحكام</Link>
+              <Link href="/contact" className="hover:text-white transition-colors">تواصل معنا</Link>
+            </nav>
             <LanguageToggle />
           </div>
         </div>
