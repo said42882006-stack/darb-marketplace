@@ -14,40 +14,46 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(req: NextRequest) {
-  const formData = await req.formData();
-  const files = formData.getAll("files") as File[];
+  try {
+    const formData = await req.formData();
+    const files = formData.getAll("files") as File[];
 
-  if (files.length === 0) {
-    return NextResponse.json({ success: false, message: "لم يتم اختيار أي صورة" }, { status: 400 });
-  }
-  if (files.length > MAX_FILES) {
-    return NextResponse.json({ success: false, message: `الحد الأقصى ${MAX_FILES} صور` }, { status: 400 });
-  }
-
-  const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  if (!useBlob) await mkdir(uploadDir, { recursive: true });
-
-  const urls: string[] = [];
-  for (const file of files) {
-    if (!ALLOWED.includes(file.type)) {
-      return NextResponse.json({ success: false, message: "صيغة الصورة غير مدعومة (JPG, PNG, WEBP فقط)" }, { status: 400 });
+    if (files.length === 0) {
+      return NextResponse.json({ success: false, message: "لم يتم اختيار أي صورة" }, { status: 400 });
     }
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ success: false, message: "حجم الصورة يتجاوز 5 ميجابايت" }, { status: 400 });
+    if (files.length > MAX_FILES) {
+      return NextResponse.json({ success: false, message: `الحد الأقصى ${MAX_FILES} صور` }, { status: 400 });
     }
-    const ext = file.type.split("/")[1];
-    const filename = `${randomUUID()}.${ext}`;
 
-    if (useBlob) {
-      const blob = await put(`listings/${filename}`, file, { access: "public" });
-      urls.push(blob.url);
-    } else {
-      const bytes = Buffer.from(await file.arrayBuffer());
-      await writeFile(path.join(uploadDir, filename), bytes);
-      urls.push(`/uploads/${filename}`);
+    const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    if (!useBlob) await mkdir(uploadDir, { recursive: true });
+
+    const urls: string[] = [];
+    for (const file of files) {
+      if (!ALLOWED.includes(file.type)) {
+        return NextResponse.json({ success: false, message: "صيغة الصورة غير مدعومة (JPG, PNG, WEBP فقط)" }, { status: 400 });
+      }
+      if (file.size > MAX_SIZE) {
+        return NextResponse.json({ success: false, message: "حجم الصورة يتجاوز 5 ميجابايت" }, { status: 400 });
+      }
+      const ext = file.type.split("/")[1];
+      const filename = `${randomUUID()}.${ext}`;
+
+      if (useBlob) {
+        const blob = await put(`listings/${filename}`, file, { access: "public" });
+        urls.push(blob.url);
+      } else {
+        const bytes = Buffer.from(await file.arrayBuffer());
+        await writeFile(path.join(uploadDir, filename), bytes);
+        urls.push(`/uploads/${filename}`);
+      }
     }
+
+    return NextResponse.json({ success: true, urls });
+  } catch (err) {
+    console.error("[upload] failed:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ success: false, message: `فشل الرفع: ${message}` }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true, urls });
 }
