@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { toE164Oman } from "./phone";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -17,7 +18,8 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.phone || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({ where: { phone: credentials.phone } });
+        const normalizedPhone = toE164Oman(credentials.phone);
+        const user = await prisma.user.findUnique({ where: { phone: normalizedPhone } });
         if (!user) return null;
 
         const valid = await bcrypt.compare(credentials.password, user.password);
