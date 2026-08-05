@@ -51,6 +51,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     messages: messages.map((m) => ({
       id: m.id,
       body: m.body,
+      type: m.type,
+      attachmentUrl: m.attachmentUrl,
       senderId: m.senderId,
       mine: m.senderId === userId,
       createdAt: m.createdAt,
@@ -70,20 +72,42 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ success: false, message: "المحادثة غير موجودة" }, { status: 404 });
   }
 
-  const { body } = await req.json();
-  if (!body || !body.trim()) {
-    return NextResponse.json({ success: false, message: "الرسالة فارغة" }, { status: 400 });
-  }
-  if (body.length > 2000) {
-    return NextResponse.json({ success: false, message: "الرسالة طويلة جداً" }, { status: 400 });
+  const { body, type, attachmentUrl } = await req.json();
+  const messageType = type === "image" || type === "audio" ? type : "text";
+
+  if (messageType === "text") {
+    if (!body || !body.trim()) {
+      return NextResponse.json({ success: false, message: "الرسالة فارغة" }, { status: 400 });
+    }
+    if (body.length > 2000) {
+      return NextResponse.json({ success: false, message: "الرسالة طويلة جداً" }, { status: 400 });
+    }
+  } else if (!attachmentUrl) {
+    return NextResponse.json({ success: false, message: "المرفق مفقود" }, { status: 400 });
   }
 
   const [message] = await prisma.$transaction([
     prisma.message.create({
-      data: { conversationId: params.id, senderId: userId, body: body.trim() },
+      data: {
+        conversationId: params.id,
+        senderId: userId,
+        body: (body ?? "").trim(),
+        type: messageType,
+        attachmentUrl: attachmentUrl || null,
+      },
     }),
     prisma.conversation.update({ where: { id: params.id }, data: { updatedAt: new Date() } }),
   ]);
 
-  return NextResponse.json({ success: true, message: { id: message.id, body: message.body, mine: true, createdAt: message.createdAt } });
+  return NextResponse.json({
+    success: true,
+    message: {
+      id: message.id,
+      body: message.body,
+      type: message.type,
+      attachmentUrl: message.attachmentUrl,
+      mine: true,
+      createdAt: message.createdAt,
+    },
+  });
 }

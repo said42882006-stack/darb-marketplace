@@ -27,13 +27,21 @@ export async function GET() {
       const unreadCount = await prisma.message.count({
         where: { conversationId: c.id, senderId: { not: userId }, read: false },
       });
+      const lastMsg = c.messages[0];
+      const lastMessage = lastMsg
+        ? lastMsg.type === "image"
+          ? "📷 صورة"
+          : lastMsg.type === "audio"
+          ? "🎤 رسالة صوتية"
+          : lastMsg.body
+        : null;
       return {
         id: c.id,
         listingTitle: c.listing?.title ?? "إعلان محذوف",
         listingId: c.listingId,
         otherUserName: otherUser.name,
-        lastMessage: c.messages[0]?.body ?? null,
-        lastMessageAt: c.messages[0]?.createdAt ?? c.createdAt,
+        lastMessage,
+        lastMessageAt: lastMsg?.createdAt ?? c.createdAt,
         unreadCount,
       };
     })
