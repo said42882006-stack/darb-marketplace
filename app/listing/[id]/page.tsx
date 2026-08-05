@@ -124,7 +124,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
               انتهت مدة نشر هذا الإعلان.
             </p>
           ) : (
-            <ContactPanel phone={listing.ownerPhone} title={listing.title} />
+            <ContactPanel phone={listing.ownerPhone} title={listing.title} listingId={listing.id} />
           )}
         </div>
       </div>

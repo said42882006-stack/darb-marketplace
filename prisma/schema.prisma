@@ -28,6 +28,9 @@ model User {
 
   listings    Listing[]
   subscribers Subscriber[]
+  buyerConversations  Conversation[] @relation("BuyerConversations")
+  sellerConversations Conversation[] @relation("SellerConversations")
+  messages            Message[]
 }
 
 // Verifies a phone number via WhatsApp OTP independently of any User account —
@@ -65,6 +68,7 @@ model Listing {
   user        User?    @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   expiresAt   DateTime? // set to createdAt + 14 days at posting time; null = never expires (legacy/demo rows)
+  conversations Conversation[]
 
   @@index([category])
 }
@@ -82,6 +86,38 @@ model Subscriber {
   createdAt DateTime @default(now())
 }
 
+// In-app chat between a buyer/renter and the listing's owner. Polling-based
+// (client re-fetches every few seconds) — no websocket/third-party service
+// needed, keeping the whole feature self-contained on Vercel serverless.
+model Conversation {
+  id        String   @id @default(cuid())
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  buyerId   String
+  buyer     User     @relation("BuyerConversations", fields: [buyerId], references: [id])
+  sellerId  String
+  seller    User     @relation("SellerConversations", fields: [sellerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages  Message[]
+
+  @@unique([listingId, buyerId, sellerId])
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  body           String
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
 // Tracks a Thawani checkout session from creation until fulfillment, so the
 // redirect-back callback knows what to fulfill once payment is confirmed.
 // Subscriptions are the only paid product — no per-booking or per-listing-credit
