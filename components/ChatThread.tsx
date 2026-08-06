@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { Send, ArrowRight, ImagePlus, Mic, Square, Loader2 } from "lucide-react";
+import { Send, ArrowRight, ImagePlus, Mic, Square, Loader2, X } from "lucide-react";
 
 interface Msg {
   id: string;
@@ -22,9 +22,9 @@ export default function ChatThread({ conversationId }: { conversationId: string 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [recording, setRecording] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [imagePreview, setImagePreview] = useState<{ file: File; url: string } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,7 +46,7 @@ export default function ChatThread({ conversationId }: { conversationId: string 
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 2500); // faster refresh
+    const interval = setInterval(fetchMessages, 2500);
     return () => clearInterval(interval);
   }, [fetchMessages]);
 
@@ -68,36 +68,48 @@ export default function ChatThread({ conversationId }: { conversationId: string 
     return data;
   };
 
+  const cancelImagePreview = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview.url);
+    setImagePreview(null);
+    setInput("");
+  };
+
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Confirmed image send (explicit button press — not automatic on selection).
+    if (imagePreview) {
+      const { file, url } = imagePreview;
+      const caption = input.trim();
+      setImagePreview(null);
+      setInput("");
+      setSending(true);
+      setPending({ id: "pending", body: caption, type: "image", attachmentUrl: url, mine: true, createdAt: new Date().toISOString() });
+      try {
+        const formData = new FormData();
+        formData.append("files", file);
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (data.success && data.urls?.[0]) {
+          await postMessage({ type: "image", attachmentUrl: data.urls[0], body: caption });
+        } else {
+          setPending(null);
+          alert(data.message ?? "تعذّر رفع الصورة");
+        }
+      } finally {
+        URL.revokeObjectURL(url);
+        setSending(false);
+      }
+      return;
+    }
+
     if (!input.trim()) return;
     const body = input.trim();
     setInput("");
     setSending(true);
-    // Optimistic bubble — shows instantly instead of waiting for the round trip.
     setPending({ id: "pending", body, type: "text", attachmentUrl: null, mine: true, createdAt: new Date().toISOString() });
     await postMessage({ body, type: "text" });
     setSending(false);
-  };
-
-  const sendImage = async (file: File) => {
-    setUploadingImage(true);
-    const previewUrl = URL.createObjectURL(file);
-    setPending({ id: "pending", body: "", type: "image", attachmentUrl: previewUrl, mine: true, createdAt: new Date().toISOString() });
-    try {
-      const formData = new FormData();
-      formData.append("files", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.success && data.urls?.[0]) {
-        await postMessage({ type: "image", attachmentUrl: data.urls[0] });
-      } else {
-        setPending(null);
-        alert(data.message ?? "تعذّر رفع الصورة");
-      }
-    } finally {
-      setUploadingImage(false);
-    }
   };
 
   const startRecording = async () => {
@@ -141,13 +153,13 @@ export default function ChatThread({ conversationId }: { conversationId: string 
   };
 
   if (!loaded) {
-    return <div className="flex-1 flex items-center justify-center text-sm text-muted">جارٍ التحميل...</div>;
+    return <div className="h-screen flex items-center justify-center text-sm text-muted">جارٍ التحميل...</div>;
   }
 
   const allMessages = pending ? [...messages, pending] : messages;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-2xl mx-auto w-full">
+    <div className="flex flex-col h-screen max-w-2xl mx-auto w-full">
       <div className="flex items-center gap-3 border-b border-line px-4 py-3 bg-white shrink-0">
         <Link href="/inbox" className="text-muted hover:text-teal transition-colors">
           <ArrowRight className="w-5 h-5" />
@@ -192,6 +204,24 @@ export default function ChatThread({ conversationId }: { conversationId: string 
         <div ref={bottomRef} />
       </div>
 
+      {imagePreview && (
+        <div className="flex items-center gap-3 border-t border-line bg-white px-4 pt-3">
+          <div className="relative shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={imagePreview.url} alt="" className="w-16 h-16 rounded-lg object-cover border border-line" />
+            <button
+              type="button"
+              onClick={cancelImagePreview}
+              aria-label="إلغاء الصورة"
+              className="absolute -top-2 -left-2 bg-navy text-white rounded-full p-1 hover:bg-navy-deep"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+          <p className="text-xs text-muted">أضف تعليقاً (اختياري) واضغط إرسال لتأكيد الصورة.</p>
+        </div>
+      )}
+
       <form onSubmit={send} className="flex items-center gap-2 border-t border-line p-3 bg-white shrink-0">
         <input
           ref={fileInputRef}
@@ -200,24 +230,24 @@ export default function ChatThread({ conversationId }: { conversationId: string 
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) sendImage(file);
+            if (file) setImagePreview({ file, url: URL.createObjectURL(file) });
             e.target.value = "";
           }}
         />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={uploadingImage || recording}
-          aria-label="إرسال صورة"
+          disabled={recording || !!imagePreview}
+          aria-label="إرفاق صورة"
           className="shrink-0 text-muted hover:text-teal transition-colors disabled:opacity-40 p-1"
         >
-          {uploadingImage ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImagePlus className="w-5 h-5" />}
+          <ImagePlus className="w-5 h-5" />
         </button>
 
         <button
           type="button"
           onClick={recording ? stopRecording : startRecording}
-          disabled={uploadingAudio}
+          disabled={uploadingAudio || !!imagePreview}
           aria-label={recording ? "إيقاف التسجيل" : "تسجيل رسالة صوتية"}
           className={`shrink-0 transition-colors disabled:opacity-40 p-1 ${recording ? "text-red-600" : "text-muted hover:text-teal"}`}
         >
@@ -227,12 +257,12 @@ export default function ChatThread({ conversationId }: { conversationId: string 
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={recording ? "جارٍ التسجيل..." : "اكتب رسالتك..."}
+          placeholder={recording ? "جارٍ التسجيل..." : imagePreview ? "تعليق (اختياري)..." : "اكتب رسالتك..."}
           disabled={recording}
           className="flex-1 rounded-full border border-line px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal disabled:opacity-50"
         />
         <button
-          disabled={sending || !input.trim()}
+          disabled={sending || (!imagePreview && !input.trim())}
           type="submit"
           aria-label="إرسال"
           className="shrink-0 bg-teal text-white rounded-full p-2.5 hover:bg-teal-deep transition-colors disabled:opacity-40"

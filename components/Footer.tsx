@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { CATEGORIES, categoryLabel } from "@/lib/constants";
 import { useLanguage } from "./LanguageProvider";
 
 export default function Footer() {
   const { t, locale } = useLanguage();
+  const pathname = usePathname();
+  if (pathname?.startsWith("/chat/")) return null;
 
   return (
     <footer className="border-t border-line mt-10 bg-white">

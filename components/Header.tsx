@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Plus, Search, MapPin } from "lucide-react";
 import { CATEGORIES, categoryLabel } from "@/lib/constants";
 import AuthStatus from "./AuthStatus";
@@ -9,6 +10,8 @@ import { useLanguage } from "./LanguageProvider";
 
 export default function Header() {
   const { locale, t } = useLanguage();
+  const pathname = usePathname();
+  if (pathname?.startsWith("/chat/")) return null;
 
   return (
     <header className="sticky top-0 z-30">
