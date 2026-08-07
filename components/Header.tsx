@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus, Search, MapPin } from "lucide-react";
-import { CATEGORIES, categoryLabel } from "@/lib/constants";
 import AuthStatus from "./AuthStatus";
 import LanguageToggle from "./LanguageToggle";
 import { useLanguage } from "./LanguageProvider";
 
 export default function Header() {
-  const { locale, t } = useLanguage();
+  const { t } = useLanguage();
   const pathname = usePathname();
   if (pathname?.startsWith("/chat/")) return null;
 
@@ -62,25 +61,15 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Category strip */}
-        <nav className="flex items-center gap-1 overflow-x-auto px-4 pb-3 sm:justify-center">
-          {CATEGORIES.map((c) => (
-            <Link
-              key={c.id}
-              href={`/category/${c.id}`}
-              className="shrink-0 text-xs sm:text-sm font-medium text-sand/90 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-teal"
-            >
-              {categoryLabel(c, locale)}
-            </Link>
-          ))}
-          <span className="shrink-0 w-px h-4 bg-white/20 mx-1" />
-          <Link href="/about" className="shrink-0 text-xs sm:text-sm font-medium text-sand/70 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-teal">
+        {/* Utility links (categories live on the homepage, not here, to avoid clutter) */}
+        <nav className="flex items-center justify-center gap-1 px-4 pb-3">
+          <Link href="/about" className="shrink-0 text-xs sm:text-sm font-medium text-sand/80 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-teal">
             عن الموقع
           </Link>
-          <Link href="/terms" className="shrink-0 text-xs sm:text-sm font-medium text-sand/70 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-teal">
+          <Link href="/terms" className="shrink-0 text-xs sm:text-sm font-medium text-sand/80 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-teal">
             الشروط والأحكام
           </Link>
-          <Link href="/contact" className="shrink-0 text-xs sm:text-sm font-medium text-sand/70 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-teal">
+          <Link href="/contact" className="shrink-0 text-xs sm:text-sm font-medium text-sand/80 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-teal">
             تواصل معنا
           </Link>
         </nav>

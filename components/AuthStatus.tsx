@@ -19,7 +19,7 @@ export default function AuthStatus() {
         .catch(() => {});
     };
     poll();
-    const interval = setInterval(poll, 20000);
+    const interval = setInterval(poll, 10000);
     return () => clearInterval(interval);
   }, [session]);
 

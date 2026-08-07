@@ -12,16 +12,14 @@ export interface AttributeDef {
 }
 
 export const CATEGORY_ATTRIBUTES: Partial<Record<CategoryId, AttributeDef>> = {
-  homes: {
-    key: "bedrooms",
-    label: "عدد الغرف",
+  real_estate: {
+    key: "property_type",
+    label: "نوع العقار",
     options: [
-      { value: "studio", label: "استوديو" },
-      { value: "1", label: "غرفة واحدة" },
-      { value: "2", label: "غرفتان" },
-      { value: "3", label: "3 غرف" },
-      { value: "4", label: "4 غرف" },
-      { value: "5+", label: "5 غرف فأكثر" },
+      { value: "apartment", label: "شقة" },
+      { value: "villa", label: "فيلا" },
+      { value: "office", label: "مكتب" },
+      { value: "shop", label: "محل تجاري" },
     ],
   },
   chalets: {
@@ -43,6 +41,15 @@ export const CATEGORY_ATTRIBUTES: Partial<Record<CategoryId, AttributeDef>> = {
       { value: "5", label: "5 نجوم" },
     ],
   },
+  hotels: {
+    key: "stars",
+    label: "تصنيف الفندق",
+    options: [
+      { value: "3", label: "3 نجوم" },
+      { value: "4", label: "4 نجوم" },
+      { value: "5", label: "5 نجوم" },
+    ],
+  },
   cars: {
     key: "transmission",
     label: "ناقل الحركة",
@@ -51,67 +58,14 @@ export const CATEGORY_ATTRIBUTES: Partial<Record<CategoryId, AttributeDef>> = {
       { value: "manual", label: "عادي" },
     ],
   },
-  trucks: {
-    key: "truck_type",
-    label: "نوع الشاحنة",
-    options: [
-      { value: "box", label: "صندوق مغلق" },
-      { value: "flatbed", label: "ستيك" },
-      { value: "trailer", label: "بلت" },
-      { value: "other", label: "أخرى" },
-    ],
-  },
-  oil_transport: {
-    key: "tanker_type",
-    label: "نوع المشتق",
-    options: [
-      { value: "petrol", label: "بنزين" },
-      { value: "diesel", label: "ديزل" },
-      { value: "gas", label: "غاز" },
-    ],
-  },
-  delivery: {
+  transport: {
     key: "vehicle_type",
-    label: "وسيلة التوصيل",
+    label: "نوع المركبة",
     options: [
-      { value: "car", label: "سيارة" },
-      { value: "motorcycle", label: "دراجة نارية" },
-      { value: "small_truck", label: "شاحنة صغيرة" },
-    ],
-  },
-  mandoob: {
-    key: "service_type",
-    label: "نوع الخدمة",
-    options: [
-      { value: "shopping", label: "تسوق" },
-      { value: "documents", label: "أوراق رسمية" },
-      { value: "general", label: "مهام عامة" },
-    ],
-  },
-  taxi: {
-    key: "car_type",
-    label: "نوع السيارة",
-    options: [
-      { value: "sedan", label: "سيدان" },
-      { value: "suv", label: "دفع رباعي" },
-      { value: "van", label: "فان" },
-    ],
-  },
-  bikes: {
-    key: "bike_type",
-    label: "نوع الدراجة",
-    options: [
-      { value: "bicycle", label: "هوائية" },
-      { value: "motorcycle", label: "نارية" },
-    ],
-  },
-  boats: {
-    key: "boat_type",
-    label: "نوع القارب",
-    options: [
-      { value: "fishing", label: "صيد" },
-      { value: "leisure", label: "نزهة" },
-      { value: "jetski", label: "جيت سكي" },
+      { value: "box_truck", label: "شاحنة صندوق" },
+      { value: "flatbed", label: "دبل/ستيك" },
+      { value: "pickup", label: "بكب" },
+      { value: "other", label: "أخرى" },
     ],
   },
 };

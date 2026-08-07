@@ -1,20 +1,24 @@
 import {
-  Home, Car, Palmtree, Waves, Truck, Fuel, Package,
-  UserRound, CarTaxiFront, Bike, Sailboat, Boxes, LucideIcon,
+  Building2, Trees, Palmtree, Waves, BedDouble,
+  Car, Bike, Sailboat,
+  UserRound, Truck, Construction, HardHat, Warehouse,
+  Boxes, LucideIcon,
 } from "lucide-react";
 import { CategoryId } from "./constants";
 
 export const CATEGORY_ICONS: Record<CategoryId, LucideIcon> = {
-  homes: Home,
-  cars: Car,
+  real_estate: Building2,
+  land: Trees,
   chalets: Palmtree,
   resorts: Waves,
-  trucks: Truck,
-  oil_transport: Fuel,
-  delivery: Package,
-  mandoob: UserRound,
-  taxi: CarTaxiFront,
+  hotels: BedDouble,
+  cars: Car,
   bikes: Bike,
   boats: Sailboat,
+  mandoob: UserRound,
+  transport: Truck,
+  cranes: Construction,
+  heavy_equipment: HardHat,
+  caravan: Warehouse,
   other: Boxes,
 };

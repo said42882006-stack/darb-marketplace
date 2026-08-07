@@ -52,7 +52,7 @@ export default async function HomePage({
             كل ما يُؤجَّر أو يُنقَل، في مكان واحد
           </h1>
           <p className="text-sm sm:text-base max-w-xl text-muted">
-            منازل، سيارات، شاليهات، منتجعات، دراجات، قوارب — أو شاحنات ونقل نفط ومندوب وتاكسي وتوصيل. تصفح، تواصل مباشرة مع المعلن، وانشر إعلانك بسهولة.
+            عقارات، أراضٍ، شاليهات، منتجعات، فنادق، سيارات، دراجات، قوارب — أو نقل عام ومندوب ورافعات ومعدات ثقيلة وكرفان. تصفح، تواصل مباشرة مع المعلن، وانشر إعلانك بسهولة.
           </p>
           <form method="get" className="flex items-center gap-2 rounded-2xl p-2 shadow-sm bg-white border border-line">
             <Search className="w-5 h-5 mr-1 text-muted shrink-0" />

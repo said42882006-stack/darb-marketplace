@@ -31,7 +31,7 @@ export default function PostAdFlow({
   const [toLocation, setToLocation] = useState<LocationValue>({ address: "", lat: null, lng: null });
 
   const [form, setForm] = useState({
-    category: "homes",
+    category: "real_estate",
     title: "",
     description: "",
     price: "",

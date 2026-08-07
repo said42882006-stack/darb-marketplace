@@ -46,7 +46,7 @@ export default function ChatThread({ conversationId }: { conversationId: string 
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 2500);
+    const interval = setInterval(fetchMessages, 1500); // faster refresh, closer to real-time
     return () => clearInterval(interval);
   }, [fetchMessages]);
 
@@ -177,8 +177,8 @@ export default function ChatThread({ conversationId }: { conversationId: string 
       </div>
 
       <div
-        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2 bg-sand/50"
-        style={{ backgroundImage: "url('/chat-pattern.svg')", backgroundRepeat: "repeat", backgroundSize: "340px" }}
+        className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2 bg-[#EFE9DD]"
+        style={{ backgroundImage: "url('/chat-pattern.svg')", backgroundRepeat: "repeat", backgroundSize: "300px" }}
       >
         {allMessages.length === 0 && (
           <p className="text-center text-sm text-muted mt-8">ابدأ المحادثة بإرسال أول رسالة.</p>
@@ -186,8 +186,8 @@ export default function ChatThread({ conversationId }: { conversationId: string 
         {allMessages.map((m) => (
           <div
             key={m.id}
-            className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
-              m.mine ? "self-start bg-teal text-white" : "self-end bg-white text-ink border border-line"
+            className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
+              m.mine ? "self-start bg-teal text-white rounded-tr-sm" : "self-end bg-white text-ink border border-line rounded-tl-sm"
             } ${m.id === "pending" ? "opacity-70" : ""}`}
           >
             {m.type === "image" && m.attachmentUrl && (
