@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { FREE_LISTINGS_LIMIT, MAX_LISTING_IMAGES, LISTING_LIFETIME_DAYS } from "@/lib/constants";
 import { CATEGORY_ATTRIBUTES } from "@/lib/categoryAttributes";
+import { resolveUserId } from "@/lib/mobileAuth";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -52,8 +51,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  const userId = await resolveUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: "يجب تسجيل الدخول لنشر إعلان" }, { status: 401 });
   }
 
@@ -68,15 +67,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "الحقول المطلوبة غير مكتملة" }, { status: 400 });
   }
 
-  const userId = (session.user as any).id as string;
-
-  const [listingCount, activeSubscription] = await Promise.all([
+  const [currentUser, listingCount, activeSubscription] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId } }),
     prisma.listing.count({ where: { userId } }),
     prisma.subscriber.findFirst({
       where: { userId, active: true, expiresAt: { gt: new Date() } },
       orderBy: { expiresAt: "desc" },
     }),
   ]);
+  if (!currentUser) {
+    return NextResponse.json({ success: false, message: "المستخدم غير موجود" }, { status: 404 });
+  }
 
   const usingFreeSlot = !activeSubscription && listingCount < FREE_LISTINGS_LIMIT;
   const usingSubscription = !!activeSubscription;
@@ -87,8 +88,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const sessionUserName = session.user.name;
-  const sessionUserEmail = session.user.email;
+  const sessionUserName = currentUser.name;
+  const sessionUserEmail = currentUser.email;
   const expiresAt = new Date(Date.now() + LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000);
 
   const listing = await prisma.listing.create({

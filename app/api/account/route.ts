@@ -1,12 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { toE164Oman } from "@/lib/phone";
+import { resolveUserId } from "@/lib/mobileAuth";
+import { PLANS } from "@/lib/constants";
+
+// Used by the mobile app (no server-rendered account page there) to fetch the
+// full profile + subscription + listings in one call.
+export async function GET(req: NextRequest) {
+  const userId = await resolveUserId(req);
+  if (!userId) {
+    return NextResponse.json({ success: false, message: "يجب تسجيل الدخول" }, { status: 401 });
+  }
+
+  const [user, activeSubscription, listings] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId } }),
+    prisma.subscriber.findFirst({
+      where: { userId, active: true, expiresAt: { gt: new Date() } },
+      orderBy: { expiresAt: "desc" },
+    }),
+    prisma.listing.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
+  ]);
+  if (!user) {
+    return NextResponse.json({ success: false, message: "المستخدم غير موجود" }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    success: true,
+    user: {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      photo: user.photo,
+      gender: user.gender,
+      birthdate: user.birthdate?.toISOString().slice(0, 10) ?? null,
+      accountType: user.accountType,
+    },
+    subscriptionPlanName: activeSubscription ? PLANS.find((p) => p.id === activeSubscription.planId)?.name ?? null : null,
+    subscriptionExpiresAt: activeSubscription?.expiresAt?.toISOString() ?? null,
+    listings: listings.map((l) => ({
+      id: l.id,
+      title: l.title,
+      category: l.category,
+      price: l.price,
+      createdAt: l.createdAt.toISOString(),
+      expiresAt: l.expiresAt?.toISOString() ?? null,
+    })),
+  });
+}
 
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  const userId = await resolveUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: "يجب تسجيل الدخول" }, { status: 401 });
   }
 
@@ -15,7 +59,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: false, message: "الاسم مطلوب" }, { status: 400 });
   }
 
-  const userId = (session.user as any).id as string;
   const existing = await prisma.user.findUnique({ where: { id: userId } });
   if (!existing) {
     return NextResponse.json({ success: false, message: "المستخدم غير موجود" }, { status: 404 });

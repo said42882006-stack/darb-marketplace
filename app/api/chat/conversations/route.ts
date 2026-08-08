@@ -1,14 +1,12 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveUserId } from "@/lib/mobileAuth";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+export async function GET(req: NextRequest) {
+  const userId = await resolveUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: "يجب تسجيل الدخول" }, { status: 401 });
   }
-  const userId = (session.user as any).id as string;
 
   const conversations = await prisma.conversation.findMany({
     where: { OR: [{ buyerId: userId }, { sellerId: userId }] },

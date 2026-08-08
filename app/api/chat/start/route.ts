@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveUserId } from "@/lib/mobileAuth";
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  const buyerId = await resolveUserId(req);
+  if (!buyerId) {
     return NextResponse.json({ success: false, message: "يجب تسجيل الدخول" }, { status: 401 });
   }
 
@@ -19,7 +18,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, message: "لا يمكن بدء محادثة حول هذا الإعلان" }, { status: 400 });
   }
 
-  const buyerId = (session.user as any).id as string;
   if (buyerId === listing.userId) {
     return NextResponse.json({ success: false, message: "لا يمكنك مراسلة نفسك" }, { status: 400 });
   }

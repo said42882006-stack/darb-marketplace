@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveUserId } from "@/lib/mobileAuth";
 
 async function getAuthorizedConversation(conversationId: string, userId: string) {
   const conversation = await prisma.conversation.findUnique({
@@ -18,11 +17,10 @@ async function getAuthorizedConversation(conversationId: string, userId: string)
 }
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  const userId = await resolveUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: "يجب تسجيل الدخول" }, { status: 401 });
   }
-  const userId = (session.user as any).id as string;
 
   const conversation = await getAuthorizedConversation(params.id, userId);
   if (!conversation) {
@@ -61,11 +59,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
+  const userId = await resolveUserId(req);
+  if (!userId) {
     return NextResponse.json({ success: false, message: "يجب تسجيل الدخول" }, { status: 401 });
   }
-  const userId = (session.user as any).id as string;
 
   const conversation = await getAuthorizedConversation(params.id, userId);
   if (!conversation) {
